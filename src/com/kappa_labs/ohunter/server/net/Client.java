@@ -24,8 +24,8 @@ public class Client {
                 System.out.println("Pred oos");
                 ObjectOutputStream oos = new ObjectOutputStream(server.getOutputStream());
                 System.out.println("Data na server");
-                RequestPkg rp = new RequestPkg(Request.TYPE.REGISTER);
-                rp.setParams(new Object[]{"nickClient", "passwdClient"});
+                RequestPkg rp = new RequestPkg();
+                rp.callRegisterRequest("locNick", "locPasswd");
                 oos.writeObject(rp);
                 oos.flush();
                 System.out.println("Data OK odeslana");
