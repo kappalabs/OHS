@@ -2,6 +2,10 @@
 package com.kappa_labs.ohunter.server.analyzer;
 
 import com.kappa_labs.ohunter.server.entities.Problem;
+import ilog.concert.IloException;
+import ilog.concert.IloNumExpr;
+import ilog.concert.IloNumVar;
+import ilog.cplex.IloCplex;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,6 +43,24 @@ public class EMDSolver {
      * @return The result optimal EMD value.
      */
     public float countValue() {
+        
+//        try {
+//            IloCplex cplex = new IloCplex();
+//            
+//            IloNumVar x = new IloNumVar[problem.distr1.size()][problem.distr2.size()];
+//            for (int i = 0; i < problem.distr1.size(); i++) {
+//                x[i] = cplex.numVarArray(problem.distr1.size(), 0, Double.MAX_VALUE);
+//            }
+//            //cplex.numVarArray(problem.distr1.size(), 0, Double.MAX_VALUE);
+//            double[] ds = new double[x.length];
+//            for (int i = 0; i < ds.length; i++) {
+//                ds = problem.distr1.get(i).vector.distance(problem.distr2.get(j).vector);
+//            }
+//            cplex.addMinimize(cplex.sum(cplex.prod(1, 2), cplex.prod(1, 2)));
+//        } catch (IloException ex) {
+//            Logger.getLogger(EMDSolver.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//        
         problem.saveToMOD(LP_FILE_NAME);
         
         float similarity = 0;

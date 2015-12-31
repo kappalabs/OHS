@@ -1,6 +1,8 @@
 
 package com.kappa_labs.ohunter.server.google_api;
 
+import com.kappa_labs.ohunter.entities.Photo;
+import com.kappa_labs.ohunter.entities.Place;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;

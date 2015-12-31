@@ -1,30 +1,18 @@
 
 package com.kappa_labs.ohunter.server.net.requests;
 
+import com.kappa_labs.ohunter.entities.Player;
 import com.kappa_labs.ohunter.server.database.DatabaseService;
-import com.kappa_labs.ohunter.server.entities.Player;
-import com.kappa_labs.ohunter.server.net.OHException;
-import com.kappa_labs.ohunter.server.net.Response;
+import com.kappa_labs.ohunter.net.OHException;
+import com.kappa_labs.ohunter.net.Response;
 
-/**
- * Request to update players settings in database.
- */
-public class UpdatePlayerRequest extends Request {
 
-    /**
-     * Creates a new request to update values of given player in database.
-     * 
-     * @param player The player, whose values should be updated in database.
-     */
+public class UpdatePlayerRequest extends com.kappa_labs.ohunter.requests.UpdatePlayerRequest {
+
     public UpdatePlayerRequest(Player player) {
-        this.player = player;
+        super(player);
     }
 
-    @Override
-    public int getID() {
-        return Request.UPDATE_PLAYER;
-    }
-    
     @Override
     public Response execute() throws OHException {
         DatabaseService ds = new DatabaseService();

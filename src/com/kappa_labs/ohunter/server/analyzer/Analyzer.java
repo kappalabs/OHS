@@ -1,7 +1,7 @@
 
 package com.kappa_labs.ohunter.server.analyzer;
 
-import com.kappa_labs.ohunter.server.google_api.Photo;
+import com.kappa_labs.ohunter.entities.Photo;
 import com.kappa_labs.ohunter.server.entities.DistrPair;
 import com.kappa_labs.ohunter.server.entities.Problem;
 import com.kappa_labs.ohunter.server.entities.Segment;
@@ -17,7 +17,7 @@ import java.awt.image.BufferedImage;
  */
 public class Analyzer {
     
-    public static final int OPTIMAL_WIDTH = 256;
+    public static final int OPTIMAL_WIDTH = 128;
     public static final int OPTIMAL_HEIGHT = OPTIMAL_WIDTH;
     
     private Analyzer() {
@@ -99,7 +99,9 @@ public class Analyzer {
             }
             /* The other elements - another 5 of them */
             int o_width = seg.getRight() - seg.getLeft();
+            o_width = Math.max(o_width, 1);
             int o_height = seg.getBottom() - seg.getTop();
+            o_height = Math.max(o_height, 1);
             int o_area = o_width * o_height;
             /* NOTE: experimental, puvodni hodnoty ze specifikace nebyly vhodne,
                 pouzitym zpusobem jsem normalizoval kazdou slozku vektoru do intervalu

@@ -1,17 +1,18 @@
 
 package com.kappa_labs.ohunter.server;
 
-import com.kappa_labs.ohunter.server.google_api.Photo;
-import com.kappa_labs.ohunter.server.google_api.Place;
+import com.kappa_labs.ohunter.entities.Photo;
+import com.kappa_labs.ohunter.entities.Place;
 import com.kappa_labs.ohunter.server.analyzer.Analyzer;
 import com.kappa_labs.ohunter.server.database.Database;
-import com.kappa_labs.ohunter.server.entities.Player;
-import com.kappa_labs.ohunter.server.net.requests.LoginRequest;
-import com.kappa_labs.ohunter.server.net.OHException;
-import com.kappa_labs.ohunter.server.net.requests.RegisterRequest;
-import com.kappa_labs.ohunter.server.net.Response;
-import com.kappa_labs.ohunter.server.net.requests.SearchRequest;
+import com.kappa_labs.ohunter.entities.Player;
+import com.kappa_labs.ohunter.net.OHException;
+import com.kappa_labs.ohunter.net.Response;
+import com.kappa_labs.ohunter.server.net.Client;
 import com.kappa_labs.ohunter.server.net.Server;
+import com.kappa_labs.ohunter.server.net.requests.LoginRequest;
+import com.kappa_labs.ohunter.server.net.requests.RegisterRequest;
+import com.kappa_labs.ohunter.server.net.requests.SearchRequest;
 import com.kappa_labs.ohunter.server.utils.PasswordUtils;
 import java.awt.Color;
 import java.awt.FontMetrics;
@@ -21,6 +22,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.rmi.RemoteException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
@@ -52,7 +54,7 @@ public class OHunterServer {
         fdark = fda.list(fnf);
     }
     
-    private static void testDatabase() {
+    private static void testDatabase() throws RemoteException {
         /* Vypis obsahu databaze */
         Database.getInstance().showPlayers();
         Player player = null;
@@ -97,9 +99,9 @@ public class OHunterServer {
                 // Hlinsko a okoli
                 SearchRequest sr = new SearchRequest(player, 49.7621308, 15.9075567, 10000, 1080, 720);
                 // Vysehrad
-//                SearchRequest sr = new SearchRequest(player, 50.0647411, 14.4196972, 200, 1080, 720);
+//                SearchRequest_ sr = new SearchRequest_(player, 50.0647411, 14.4196972, 200, 1080, 720);
                 // Staromestske namesti
-//                SearchRequest sr = new SearchRequest(player, 50.0872842, 14.4213600, 200, 1080, 720);
+//                SearchRequest_ sr = new SearchRequest_(player, 50.0872842, 14.4213600, 200, 1080, 720);
                 
                 Response re_sr = sr.execute();
                 /* Vypis informaci o ziskanych mistech a jejich lokalni ulozeni */
@@ -123,7 +125,6 @@ public class OHunterServer {
     
     private static void loadImg(String fname, Photo photo) {
         try {
-            System.out.println("ctu "+fname);
             photo.image = ImageIO.read(new File(fname));
             photo.reference = fname.replaceAll("\\..{3,4}$", "").replaceAll("^.*/", "");
         } catch (IOException ex) {
@@ -234,15 +235,17 @@ public class OHunterServer {
 //        System.out.println("Testing database:");
 //        System.out.println("==============");
 //        testDatabase();
-        System.out.println("\nTesting analyzer:");
-        System.out.println("==============");
-        testAnalyzer();
+//        System.out.println("\nTesting analyzer:");
+//        System.out.println("==============");
+//        testAnalyzer();
 //        System.out.println("\nTesting night recognizer:");
 //        System.out.println("==============");
 //        testNight();
-//        System.out.println("\nTesting server:");
-//        System.out.println("==============");
-//        startServer();
+        System.out.println("\nTesting server:");
+        System.out.println("==============");
+        startServer();
+//        
+//        Client c = new Client();
     }
     
 }

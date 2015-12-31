@@ -1,40 +1,18 @@
 
 package com.kappa_labs.ohunter.server.net.requests;
 
+import com.kappa_labs.ohunter.entities.Player;
+import com.kappa_labs.ohunter.net.OHException;
+import com.kappa_labs.ohunter.net.Response;
 import com.kappa_labs.ohunter.server.database.DatabaseService;
-import com.kappa_labs.ohunter.server.entities.Player;
-import com.kappa_labs.ohunter.server.net.OHException;
-import com.kappa_labs.ohunter.server.net.Response;
 
-/**
- * Request to change password of existing player.
- */
-public class ChangePasswordRequest extends Request {
-    
-    private String nickname;
-    private String password;
-    private String oldPassword;
 
-    
-    /**
-     * Creates a new request to change password hash of given
-     * player to given password hash.
-     * 
-     * @param player The Player, whose password will be changed.
-     * @param oldPassword
-     * @param password The password hash.
-     */
+public class ChangePasswordRequest extends com.kappa_labs.ohunter.requests.ChangePasswordRequest {
+
     public ChangePasswordRequest(Player player, String oldPassword, String password) {
-        this.player = player;
-        this.oldPassword = oldPassword;
-        this.password = password;
+        super(player, oldPassword, password);
     }
-
-    @Override
-    public int getID() {
-        return Request.CHANGE_PASSWORD;
-    }
-
+    
     @Override
     public Response execute() throws OHException {
         DatabaseService ds = new DatabaseService();
@@ -43,6 +21,5 @@ public class ChangePasswordRequest extends Request {
         
         return response;
     }
-    
     
 }

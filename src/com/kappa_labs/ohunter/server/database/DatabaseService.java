@@ -1,8 +1,8 @@
 
 package com.kappa_labs.ohunter.server.database;
 
-import com.kappa_labs.ohunter.server.entities.Player;
-import com.kappa_labs.ohunter.server.net.OHException;
+import com.kappa_labs.ohunter.entities.Player;
+import com.kappa_labs.ohunter.net.OHException;
 
 /**
  * Class providing operations in database.

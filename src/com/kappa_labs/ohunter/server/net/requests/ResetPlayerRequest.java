@@ -1,29 +1,16 @@
 
 package com.kappa_labs.ohunter.server.net.requests;
 
+import com.kappa_labs.ohunter.entities.Player;
+import com.kappa_labs.ohunter.net.OHException;
+import com.kappa_labs.ohunter.net.Response;
 import com.kappa_labs.ohunter.server.database.DatabaseService;
-import com.kappa_labs.ohunter.server.entities.Player;
-import com.kappa_labs.ohunter.server.net.OHException;
-import com.kappa_labs.ohunter.server.net.Response;
 
-/**
- * Request to reset all the progress of this player, as if it was a new player.
- */
-public class ResetPlayerRequest extends Request {
 
-    /**
-     * Creates a new request to reset progress of given player,
-     * as if it was a new player.
-     * 
-     * @param player The player, which will be reset.
-     */
+public class ResetPlayerRequest extends com.kappa_labs.ohunter.requests.ResetPlayerRequest {
+
     public ResetPlayerRequest(Player player) {
-        this.player = player;
-    }
-    
-    @Override
-    public int getID() {
-        return Request.RESET_PLAYER;
+        super(player);
     }
 
     @Override
@@ -35,5 +22,4 @@ public class ResetPlayerRequest extends Request {
         return response;
     }
 
-    
 }

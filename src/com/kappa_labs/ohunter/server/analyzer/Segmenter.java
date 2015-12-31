@@ -1,7 +1,7 @@
 
 package com.kappa_labs.ohunter.server.analyzer;
 
-import com.kappa_labs.ohunter.server.google_api.Photo;
+import com.kappa_labs.ohunter.entities.Photo;
 import com.kappa_labs.ohunter.server.entities.Centroid;
 import com.kappa_labs.ohunter.server.entities.MyImage;
 import com.kappa_labs.ohunter.server.entities.Pixel;
@@ -9,12 +9,7 @@ import com.kappa_labs.ohunter.server.entities.Segment;
 import com.kappa_labs.ohunter.server.utils.CIELab;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.util.Random;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.imageio.ImageIO;
 
 /**
  * Class for image segmentation.
@@ -72,7 +67,7 @@ public class Segmenter {
                 nbi.setRGB(i, j, col);
             }
         }
-        /* Highlight centroids */
+        /* Highlight centroids by red dot */
         for (Pixel px : means) {
             nbi.setRGB(px.x, px.y, 0xFFFF0000);
         }
