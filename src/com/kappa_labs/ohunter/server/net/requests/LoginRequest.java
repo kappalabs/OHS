@@ -1,15 +1,20 @@
 
 package com.kappa_labs.ohunter.server.net.requests;
 
-import com.kappa_labs.ohunter.net.OHException;
-import com.kappa_labs.ohunter.net.Response;
+import com.kappa_labs.ohunter.lib.net.OHException;
+import com.kappa_labs.ohunter.lib.net.Response;
+import com.kappa_labs.ohunter.lib.requests.Request;
 import com.kappa_labs.ohunter.server.database.DatabaseService;
 
 
-public class LoginRequest extends com.kappa_labs.ohunter.requests.LoginRequest {
+public class LoginRequest extends com.kappa_labs.ohunter.lib.requests.LoginRequest {
 
     public LoginRequest(String nickname, String password) {
         super(nickname, password);
+    }
+    
+    public LoginRequest(Request r) {
+        super((com.kappa_labs.ohunter.lib.requests.LoginRequest) r);
     }
     
     @Override

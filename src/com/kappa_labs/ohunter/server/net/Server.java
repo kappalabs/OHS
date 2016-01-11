@@ -1,12 +1,13 @@
 
 package com.kappa_labs.ohunter.server.net;
 
-import com.kappa_labs.ohunter.net.Response;
-import com.kappa_labs.ohunter.net.OHException;
-import com.kappa_labs.ohunter.requests.Request;
-import com.kappa_labs.ohunter.requests.RequestPkg;
+import com.kappa_labs.ohunter.lib.net.Response;
+import com.kappa_labs.ohunter.lib.net.OHException;
+import com.kappa_labs.ohunter.lib.requests.Request;
 import com.kappa_labs.ohunter.server.database.Database;
 import com.kappa_labs.ohunter.server.net.requests.RequestFactory;
+import com.kappa_labs.ohunter.server.net.requests.SearchRequest;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -14,6 +15,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.net.SocketException;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -26,6 +28,10 @@ import java.util.logging.Logger;
 public class Server {
 
     public static final int PORT = 4242;
+//    public static final String ADDRESS = "localhost";
+//    public static final String ADDRESS = "192.168.1.196";
+//    public static final String ADDRESS = "192.168.42.56"; // USB tether
+    public static final String ADDRESS = "192.168.43.144"; // Android AP
     public static final int NUM_THREADS = 4;
     
     
@@ -38,8 +44,7 @@ public class Server {
         
         try {
             server = new ServerSocket();
-//            SocketAddress addr = new InetSocketAddress(InetAddress.getByName("0.0.0.0"), PORT);
-            SocketAddress addr = new InetSocketAddress("192.168.1.196", PORT);
+            SocketAddress addr = new InetSocketAddress(ADDRESS, PORT);
             server.bind(addr);
             System.out.println("name: "+addr.toString());
         
@@ -55,11 +60,9 @@ public class Server {
                     ObjectInputStream ois = new ObjectInputStream(client.getInputStream());
                     ObjectOutputStream oos = new ObjectOutputStream(client.getOutputStream());
                     System.out.println("Mam noveho klienta");
-//                    int a = (Integer) ois.readObject();
-//                    System.out.println("ziskano "+a);
-                    RequestPkg rp = (RequestPkg) ois.readObject();
-                    System.out.println("rp: "+rp.getType().name());
-                    Request request = RequestFactory.buildRequest(rp);
+                    Request request = (Request) ois.readObject();
+                    System.out.println("Request info: "+request);
+                    request = RequestFactory.buildRequest(request);
                     System.out.println("request "+(request == null ? "je" : "neni") + " null");
                     ClientWorker cw = new ClientWorker(request, oos, client);
                     executor.execute(cw);
@@ -68,12 +71,16 @@ public class Server {
                 } catch (IOException ex) {
                     System.err.println(ex);
                     Logger.getLogger(Server.class.getName()).log(Level.WARNING, null, ex);
-                } 
+                }
             }
         } catch (ClassNotFoundException ex) {
             Logger.getLogger(Server.class.getName()).log(Level.WARNING, null, ex);
         } catch (IOException ex) {
             /* Belongs to server.accept() */
+            if (ex instanceof SocketException) {
+                /* OK, client closed */
+                return;
+            }
             Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             Database.getInstance().closeDatabase();
@@ -154,10 +161,15 @@ public class Server {
         public void run() {
             try {
                 System.out.println("Request prijmut k provedeni");
-                Response response = mRequest.execute();
+                Response response = null;
+                if (mRequest instanceof SearchRequest) {
+                    ObjectInputStream ois = new ObjectInputStream(new FileInputStream(Client.objFile));
+                    response = (Response) ois.readObject();
+                } else {
+                    response = mRequest.execute();
+                }
                 System.out.println("request spocitan, odesilam...");
                 mOutput.writeObject(response);
-                mClient.close();
                 System.out.println("respond odeslan, klient obslouzen ---------------");
             } catch (OHException ex) {
                 try {
@@ -171,6 +183,16 @@ public class Server {
                 }
             } catch (IOException ex) {
                 Logger.getLogger(Server.class.getName()).log(Level.WARNING, null, ex);
+            } catch (ClassNotFoundException ex) {
+                Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+            } 
+            finally {
+                try {
+                    mOutput.close();
+                    mClient.close();
+                } catch (IOException ex) {
+                    Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         }
         

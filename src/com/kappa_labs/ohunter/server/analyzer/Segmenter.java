@@ -1,10 +1,11 @@
 
 package com.kappa_labs.ohunter.server.analyzer;
 
-import com.kappa_labs.ohunter.entities.Photo;
+import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.server.entities.Centroid;
 import com.kappa_labs.ohunter.server.entities.MyImage;
 import com.kappa_labs.ohunter.server.entities.Pixel;
+import com.kappa_labs.ohunter.server.entities.SImage;
 import com.kappa_labs.ohunter.server.entities.Segment;
 import com.kappa_labs.ohunter.server.utils.CIELab;
 import java.awt.Color;
@@ -49,7 +50,7 @@ public class Segmenter {
         Pixel[][] labs = new Pixel[photo.getWidth()][photo.getHeight()];
         for (int i = 0; i < photo.getWidth(); i++) {
             for (int j = 0; j < photo.getHeight(); j++) {
-                Color col = new Color(photo.image.getRGB(i, j));
+                Color col = new Color(((SImage)photo.image).toBufferedImage().getRGB(i, j));
                 float[] cils = ciel.fromRGB(col.getColorComponents(null));
                 labs[i][j] = new Pixel(cils, i, j);
             }
@@ -78,7 +79,7 @@ public class Segmenter {
 //            Logger.getLogger(Segmenter.class.getName()).log(Level.WARNING, null, ex);
 //        }
         /* Save it into a field in the Photo object */
-        photo._image = nbi;
+        photo._image = new SImage(nbi);
         
         Segment[] segs = Segment.makeSegments(mi, means);
         

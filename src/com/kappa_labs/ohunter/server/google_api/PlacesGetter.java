@@ -1,8 +1,10 @@
 
 package com.kappa_labs.ohunter.server.google_api;
 
-import com.kappa_labs.ohunter.entities.Photo;
-import com.kappa_labs.ohunter.entities.Place;
+import com.kappa_labs.ohunter.lib.entities.Photo;
+import com.kappa_labs.ohunter.lib.entities.Place;
+import com.kappa_labs.ohunter.server.entities.SImage;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
@@ -246,7 +248,8 @@ public class PlacesGetter {
             URL url = new URL(sb.toString());
             conn = (HttpURLConnection) url.openConnection();
 //            System.out.println("photo url = "+sb.toString());
-            photo.image = ImageIO.read(url);
+            photo.image = new SImage();
+            ((SImage)photo.image).setImage(ImageIO.read(url));
             if (photo.image == null) {
                 return null;
             }

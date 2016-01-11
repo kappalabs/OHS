@@ -3,19 +3,24 @@ package com.kappa_labs.ohunter.server.net.requests;
 
 import com.kappa_labs.ohunter.server.database.DatabaseService;
 import com.kappa_labs.ohunter.server.google_api.PlacesGetter;
-import com.kappa_labs.ohunter.entities.Photo;
-import com.kappa_labs.ohunter.entities.Place;
-import com.kappa_labs.ohunter.entities.Player;
+import com.kappa_labs.ohunter.lib.entities.Photo;
+import com.kappa_labs.ohunter.lib.entities.Place;
+import com.kappa_labs.ohunter.lib.entities.Player;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
-import com.kappa_labs.ohunter.net.OHException;
-import com.kappa_labs.ohunter.net.Response;
+import com.kappa_labs.ohunter.lib.net.OHException;
+import com.kappa_labs.ohunter.lib.net.Response;
+import com.kappa_labs.ohunter.lib.requests.Request;
 
 
-public class SearchRequest extends com.kappa_labs.ohunter.requests.SearchRequest {
+public class SearchRequest extends com.kappa_labs.ohunter.lib.requests.SearchRequest {
 
     public SearchRequest(Player player, double lat, double lng, int radius, int width, int height) {
         super(player, lat, lng, radius, width, height);
+    }
+    
+    public SearchRequest(Request r) {
+        super((com.kappa_labs.ohunter.lib.requests.SearchRequest) r);
     }
 
     @Override

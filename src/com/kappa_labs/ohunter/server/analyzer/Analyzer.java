@@ -1,7 +1,8 @@
 
 package com.kappa_labs.ohunter.server.analyzer;
 
-import com.kappa_labs.ohunter.entities.Photo;
+import com.kappa_labs.ohunter.lib.entities.Photo;
+import com.kappa_labs.ohunter.server.entities.SImage;
 import com.kappa_labs.ohunter.server.entities.DistrPair;
 import com.kappa_labs.ohunter.server.entities.Problem;
 import com.kappa_labs.ohunter.server.entities.Segment;
@@ -36,8 +37,8 @@ public class Analyzer {
         float ret;
         
         /* Scale the images to provide the best results */
-        ph1.image = resize(ph1.image, OPTIMAL_WIDTH, OPTIMAL_HEIGHT);
-        ph2.image = resize(ph2.image, OPTIMAL_WIDTH, OPTIMAL_HEIGHT);
+        ((SImage)ph1.image).setImage(resize(((SImage)ph1._image).toBufferedImage(), OPTIMAL_WIDTH, OPTIMAL_HEIGHT));
+        ((SImage)ph2.image).setImage(resize(((SImage)ph2._image).toBufferedImage(), OPTIMAL_WIDTH, OPTIMAL_HEIGHT));
         
         /* Perform segmentation */
         Segment[] segs1 = Segmenter.segment(ph1);

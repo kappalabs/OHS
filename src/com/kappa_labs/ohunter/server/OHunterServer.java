@@ -1,13 +1,14 @@
 
 package com.kappa_labs.ohunter.server;
 
-import com.kappa_labs.ohunter.entities.Photo;
-import com.kappa_labs.ohunter.entities.Place;
+import com.kappa_labs.ohunter.server.entities.SImage;
+import com.kappa_labs.ohunter.lib.entities.Photo;
+import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.server.analyzer.Analyzer;
 import com.kappa_labs.ohunter.server.database.Database;
-import com.kappa_labs.ohunter.entities.Player;
-import com.kappa_labs.ohunter.net.OHException;
-import com.kappa_labs.ohunter.net.Response;
+import com.kappa_labs.ohunter.lib.entities.Player;
+import com.kappa_labs.ohunter.lib.net.OHException;
+import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.server.net.Client;
 import com.kappa_labs.ohunter.server.net.Server;
 import com.kappa_labs.ohunter.server.net.requests.LoginRequest;
@@ -97,11 +98,11 @@ public class OHunterServer {
 //                rpr.execute();
                 
                 // Hlinsko a okoli
-                SearchRequest sr = new SearchRequest(player, 49.7621308, 15.9075567, 10000, 1080, 720);
+                SearchRequest sr = new SearchRequest(player, 49.7621308, 15.9075567, 10000, 1280, 720);
                 // Vysehrad
-//                SearchRequest_ sr = new SearchRequest_(player, 50.0647411, 14.4196972, 200, 1080, 720);
+//                SearchRequest_ sr = new SearchRequest_(player, 50.0647411, 14.4196972, 200, 1280, 720);
                 // Staromestske namesti
-//                SearchRequest_ sr = new SearchRequest_(player, 50.0872842, 14.4213600, 200, 1080, 720);
+//                SearchRequest_ sr = new SearchRequest_(player, 50.0872842, 14.4213600, 200, 1280, 720);
                 
                 Response re_sr = sr.execute();
                 /* Vypis informaci o ziskanych mistech a jejich lokalni ulozeni */
@@ -114,7 +115,8 @@ public class OHunterServer {
                 System.out.println("List of retrieved places:");
                 re_sr.places.stream().forEach((place) -> {
                     System.out.println("place: "+place);
-                    place.saveToFile(null);
+//                    place.saveToFile(null);
+//TODO: novy save to file pristup
                 });
             } catch (OHException ex) {
                 System.err.println(ex.getMessage());
@@ -125,7 +127,7 @@ public class OHunterServer {
     
     private static void loadImg(String fname, Photo photo) {
         try {
-            photo.image = ImageIO.read(new File(fname));
+            photo.image = new SImage(ImageIO.read(new File(fname)));
             photo.reference = fname.replaceAll("\\..{3,4}$", "").replaceAll("^.*/", "");
         } catch (IOException ex) {
             Logger.getLogger(OHunterServer.class.getName()).log(Level.SEVERE, null, ex);
@@ -202,8 +204,8 @@ public class OHunterServer {
                 ph1.getHeight(), BufferedImage.TYPE_INT_RGB);
         Graphics2D graph = binew.createGraphics();
         graph.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        graph.drawImage(ph1._image, 0, 0, null);
-        graph.drawImage(ph2._image, ph1.getWidth(), 0, null);
+        graph.drawImage(((SImage)ph1._image).toBufferedImage(), 0, 0, null);
+        graph.drawImage(((SImage)ph2._image).toBufferedImage(), ph1.getWidth(), 0, null);
         FontMetrics fm = graph.getFontMetrics();
         int strWidth = fm.stringWidth(label);
         graph.setColor(Color.white);
