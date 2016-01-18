@@ -1,6 +1,8 @@
 
 package com.kappa_labs.ohunter.server.net.requests;
 
+import com.kappa_labs.ohunter.lib.net.OHException;
+import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.Request;
 
 
@@ -48,6 +50,15 @@ public class RequestFactory {
         if (rpkg instanceof com.kappa_labs.ohunter.lib.requests.UpdatePlayerRequest) {
             return new UpdatePlayerRequest(rpkg);
         }
-        return null;
+        if (rpkg == null) {
+            return new Request() {
+                @Override
+                public Response execute() throws OHException {
+                    throw new OHException("Serialization version is incompatible!",
+                            OHException.EXType.SERIALIZATION_INCOMPATIBLE);
+                }
+            };
+        }
+        return new Request() {};
     }
 }

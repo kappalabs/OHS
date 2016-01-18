@@ -9,6 +9,7 @@ import com.kappa_labs.ohunter.server.net.requests.RequestFactory;
 import com.kappa_labs.ohunter.server.net.requests.SearchRequest;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InvalidClassException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
@@ -60,10 +61,15 @@ public class Server {
                     ObjectInputStream ois = new ObjectInputStream(client.getInputStream());
                     ObjectOutputStream oos = new ObjectOutputStream(client.getOutputStream());
                     System.out.println("Mam noveho klienta");
-                    Request request = (Request) ois.readObject();
-                    System.out.println("Request info: "+request);
+                    Request request = null;
+                    try {
+                        request = (Request) ois.readObject();
+                        System.out.println("Request info: "+request);
+                    } catch (InvalidClassException icex) {
+                        System.err.println("Serializace je inkompatibilni!");
+                    }
                     request = RequestFactory.buildRequest(request);
-                    System.out.println("request "+(request == null ? "je" : "neni") + " null");
+//                    System.out.println("request "+(request == null ? "je" : "neni") + " null");
                     ClientWorker cw = new ClientWorker(request, oos, client);
                     executor.execute(cw);
                     System.out.println("Request odeslan executoru");

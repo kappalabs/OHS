@@ -9,10 +9,15 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 
 /**
- *
+ * Server side extension of the basic SImage from library.
+ * Supports BufferedImage operations.
  */
 public class SImage extends com.kappa_labs.ohunter.lib.entities.SImage {
 
+    private boolean invalidated = true;
+    private BufferedImage _image;
+    
+    
     /**
      * Creates an empty SImage, with uninitialized fields.
      */
@@ -40,15 +45,23 @@ public class SImage extends com.kappa_labs.ohunter.lib.entities.SImage {
         return ((DataBufferByte) bi.getData().getDataBuffer()).getData();
     }
     
-    
+    /**
+     * Converts the internal byte array to BufferedImage object.
+     * NOTE: The object is cashed after the first call.
+     * 
+     * @return The BufferedImage converted from internal image data.
+     */
     public BufferedImage toBufferedImage() {
-        /* TODO: cash */
-        ByteArrayInputStream bais = new ByteArrayInputStream(image);
-        try {
-            return ImageIO.read(bais);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        if (invalidated || (_image == null && image != null)) {
+            ByteArrayInputStream bais = new ByteArrayInputStream(image);
+            try {
+                _image = ImageIO.read(bais);
+                invalidated = false;
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
+        return _image;
     }
     
     /**
@@ -76,6 +89,8 @@ public class SImage extends com.kappa_labs.ohunter.lib.entities.SImage {
         this.image = toBytes(bimage);
         this.width = bimage.getWidth();
         this.height = bimage.getHeight();
+        
+        invalidated = true;
     }
     
 }
