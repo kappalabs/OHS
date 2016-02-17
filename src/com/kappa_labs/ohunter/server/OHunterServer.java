@@ -46,7 +46,7 @@ public class OHunterServer {
     private static String[] fdark;
     
     static {
-        FilenameFilter fnf = ((File dir, String name) -> name.matches(".*\\.(png|jpg)$"));
+        FilenameFilter fnf = ((File dir, String name) -> name.matches(".*\\.(png|jpg|jpeg)$"));
         File fan = new File(ANALYZER);
         fanalyze = fan.list(fnf);
         File fmo = new File(DARK_MODELS);
@@ -157,6 +157,11 @@ public class OHunterServer {
         for (String dark : fdark) {
             System.out.println("Dark image: "+dark);
             loadImg(DARK + dark, ph1);
+            if (Analyzer.isNight(ph1)) {
+                System.out.println(" - at night");
+            } else {
+                System.out.println(" - not at night");
+            }
             for (String model : fdmodels) {
                 System.out.println(" -> against model: "+model);
                 loadImg(DARK_MODELS + model, ph2);
@@ -243,12 +248,12 @@ public class OHunterServer {
 //        System.out.println("\nTesting analyzer:");
 //        System.out.println("==============");
 //        testAnalyzer();
-//        System.out.println("\nTesting night recognizer:");
-//        System.out.println("==============");
-//        testNight();
-        System.out.println("\nTesting server:");
+        System.out.println("\nTesting night recognizer:");
         System.out.println("==============");
-        startServer();
+        testNight();
+//        System.out.println("\nTesting server:");
+//        System.out.println("==============");
+//        startServer();
 //        
 //        Client c = new Client();
     }

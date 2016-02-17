@@ -13,6 +13,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.Random;
 import javax.imageio.ImageIO;
 
 /**
@@ -20,6 +21,8 @@ import javax.imageio.ImageIO;
  */
 public class Analyzer {
     
+    public static final int DEFAULT_NUM_SAMPLES = 78;
+    public static final int DEFAULT_NIGHT_THRESHOLD = 80;
     public static final int OPTIMAL_WIDTH = 128;
     public static final int OPTIMAL_HEIGHT = OPTIMAL_WIDTH;
     
@@ -142,6 +145,40 @@ public class Analyzer {
             }
         }
 //        System.out.println("--------");
+    }
+   
+    /**
+     * Determines if given photo contains night picture.
+     * 
+     * @param photo The photo to analyze.
+     * @return True if the given photo contains night picture, false otherwise.
+     */
+    public static boolean isNight(Photo photo) {   
+        BufferedImage img = ((SImage) photo.image).toBufferedImage();
+        Random rand = new Random();
+        int x, y, souc = 0;
+        for (int i = 0; i < DEFAULT_NUM_SAMPLES; i++) {
+            x = rand.nextInt(img.getWidth());
+            y = rand.nextInt(img.getHeight());
+            souc += argbToByte(img.getRGB(x, y));
+        }
+        float val = (souc / DEFAULT_NUM_SAMPLES);
+//        System.out.println("night value = "+val);
+        return val < DEFAULT_NIGHT_THRESHOLD;
+    }
+    
+    /**
+     * Convert argb 4-byte color value to one byte value.
+     * 
+     * @param argb Input 4-byte value.
+     * @return 
+     */
+    private static int argbToByte(int argb) {
+        int ret = 0;
+        ret += (argb & 0xff) / 3;
+        ret += ((argb & 0xff00) >> 8) / 3;
+        ret += ((argb & 0xff0000) >> 16) / 3;
+        return ret;
     }
     
 }
