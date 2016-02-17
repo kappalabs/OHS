@@ -1,6 +1,7 @@
 
 package com.kappa_labs.ohunter.server.net;
 
+import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.net.OHException;
@@ -36,7 +37,8 @@ public class Client {
                 Request request;
                 Player p = new Player(1, "nick", 4242);
 //                request = new RegisterRequest("locNick", "locPasswd");
-                request = new SearchRequest(p, 50.0647411, 14.4196972, 200, 1280, 720);
+                request = new SearchRequest(
+                        p, 50.0647411, 14.4196972, 20000, Photo.DAYTIME.DAY, 320, 200);
 //                request = new UpdatePlayerRequest(p) {};
                 oos.writeObject(request);
                 oos.flush();

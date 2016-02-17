@@ -12,6 +12,8 @@ import com.kappa_labs.ohunter.server.utils.CIELab;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import javax.imageio.ImageIO;
 
 /**
  * Class providing a method for measuring the similarity of two given images.
@@ -37,8 +39,16 @@ public class Analyzer {
         float ret;
         
         /* Scale the images to provide the best results */
-        ((SImage)ph1.image).setImage(resize(((SImage)ph1._image).toBufferedImage(), OPTIMAL_WIDTH, OPTIMAL_HEIGHT));
-        ((SImage)ph2.image).setImage(resize(((SImage)ph2._image).toBufferedImage(), OPTIMAL_WIDTH, OPTIMAL_HEIGHT));
+        try {
+            ph1.image = ph1._image = new SImage(ph1.image);
+            ph2.image = ph2._image = new SImage(ph2.image);
+            ((SImage)ph1.image).setImage(resize(((SImage)ph1._image).toBufferedImage(), OPTIMAL_WIDTH, OPTIMAL_HEIGHT));
+            ((SImage)ph2.image).setImage(resize(((SImage)ph2._image).toBufferedImage(), OPTIMAL_WIDTH, OPTIMAL_HEIGHT));
+        } catch(Exception e) {
+            System.err.println("Could not acquire photos from client: "+e);
+            e.printStackTrace();
+            return 0;
+        }
         
         /* Perform segmentation */
         Segment[] segs1 = Segmenter.segment(ph1);

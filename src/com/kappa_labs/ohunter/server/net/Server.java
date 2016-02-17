@@ -30,7 +30,7 @@ public class Server {
 
     public static final int PORT = 4242;
 //    public static final String ADDRESS = "localhost";
-//    public static final String ADDRESS = "192.168.1.196";
+//    public static final String ADDRESS = "192.168.1.196";   // AP doma
 //    public static final String ADDRESS = "192.168.42.56"; // USB tether
     public static final String ADDRESS = "192.168.43.144"; // Android AP
     public static final int NUM_THREADS = 4;

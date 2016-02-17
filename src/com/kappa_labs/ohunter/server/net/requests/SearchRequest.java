@@ -15,8 +15,9 @@ import com.kappa_labs.ohunter.lib.requests.Request;
 
 public class SearchRequest extends com.kappa_labs.ohunter.lib.requests.SearchRequest {
 
-    public SearchRequest(Player player, double lat, double lng, int radius, int width, int height) {
-        super(player, lat, lng, radius, width, height);
+    public SearchRequest(Player player, double lat, double lng, int radius,
+            Photo.DAYTIME daytime, int width, int height) {
+        super(player, lat, lng, radius, daytime, width, height);
     }
     
     public SearchRequest(Request r) {
@@ -25,9 +26,18 @@ public class SearchRequest extends com.kappa_labs.ohunter.lib.requests.SearchReq
 
     @Override
     public Response execute() throws OHException {
+        System.out.println("search na "+lat+"; "+lng+"; radius = "+radius);
         /* Retrieve all possible places */
         ArrayList<Place> all_places;
         all_places = PlacesGetter.radarSearch(lat, lng, radius, "", TYPES);
+        
+        // redukce poctu mist!
+        int size = all_places.size();
+        int i = size;
+        // TODO: kam s konstantou?
+        while (--i >= Math.min(size, 30)) {
+            all_places.remove(i);
+        }
         
         DatabaseService ds = new DatabaseService();
         /* Turn them to Photo objects, filter blocked and rejected */
@@ -58,6 +68,8 @@ public class SearchRequest extends com.kappa_labs.ohunter.lib.requests.SearchReq
         
         Response response = new Response(uid);
         response.places = places;
+        
+        System.out.println("Mam "+places.size()+" mist");
         
         return response;
     }

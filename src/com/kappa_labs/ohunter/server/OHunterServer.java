@@ -98,11 +98,14 @@ public class OHunterServer {
 //                rpr.execute();
                 
                 // Hlinsko a okoli
-                SearchRequest sr = new SearchRequest(player, 49.7621308, 15.9075567, 10000, 1280, 720);
+                SearchRequest sr = new SearchRequest(
+                        player, 49.7621308, 15.9075567, 10000, Photo.DAYTIME.DAY, 1280, 720);
                 // Vysehrad
-//                SearchRequest_ sr = new SearchRequest_(player, 50.0647411, 14.4196972, 200, 1280, 720);
+//                SearchRequest sr = new SearchRequest(
+//                        player, 50.0647411, 14.4196972, 200, Photo.DAYTIME.DAY, 1280, 720);
                 // Staromestske namesti
-//                SearchRequest_ sr = new SearchRequest_(player, 50.0872842, 14.4213600, 200, 1280, 720);
+//                SearchRequest sr = new SearchRequest(
+//                        player, 50.0872842, 14.4213600, 200, Photo.DAYTIME.DAY, 1280, 720);
                 
                 Response re_sr = sr.execute();
                 /* Vypis informaci o ziskanych mistech a jejich lokalni ulozeni */

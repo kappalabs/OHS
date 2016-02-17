@@ -3,9 +3,11 @@ package com.kappa_labs.ohunter.server.entities;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 
 /**
@@ -35,14 +37,29 @@ public class SImage extends com.kappa_labs.ohunter.lib.entities.SImage {
     }
     
     /**
+     * Create new SImage from library version of SImage.
+     * 
+     * @param simage The library version of SImage.
+     */
+    public SImage(com.kappa_labs.ohunter.lib.entities.SImage simage) {
+        super(simage.image, simage.getWidth(), simage.getHeight());
+    }
+    
+    /**
      * Convert given BufferedImage to byte array with 3-byte BGR type.
      * 
      * @param bi BufferedImage to be converted.
      * @return Byte array representation of the BufferedImage image data.
      */
     public static byte[] toBytes(BufferedImage bi) {
-        bi = convertToRGB(bi);
-        return ((DataBufferByte) bi.getData().getDataBuffer()).getData();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try {
+            ImageIO.write(bi, "jpeg", baos);
+        } catch (IOException ex) {
+            Logger.getLogger(SImage.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
+        return baos.toByteArray();
     }
     
     /**
