@@ -23,7 +23,7 @@ public class Analyzer {
     
     public static final int DEFAULT_NUM_SAMPLES = 78;
     public static final int DEFAULT_NIGHT_THRESHOLD = 80;
-    public static final int OPTIMAL_WIDTH = 128;
+    public static final int OPTIMAL_WIDTH = 256;
     public static final int OPTIMAL_HEIGHT = OPTIMAL_WIDTH;
     
     private Analyzer() {
@@ -56,6 +56,7 @@ public class Analyzer {
         /* Perform segmentation */
         Segment[] segs1 = Segmenter.segment(ph1);
         Segment[] segs2 = Segmenter.segment(ph2);
+//        System.out.println("... mam "+segs1.length+" prvnich a "+segs2.length+" druhych");
         
         /* Create new Problem from given counted segments */
         Problem problem = new Problem();
@@ -68,7 +69,7 @@ public class Analyzer {
         EMDSolver empm = new EMDSolver(problem);
         ret = empm.countValue();
         
-        return ret;
+        return ret * 10f;
     }
     
     /**
@@ -103,9 +104,12 @@ public class Analyzer {
             Addterator<Float> addter = vect.addterator();
             
             /* Color moments - 9 elements in total */
-            float[] mean_hsb = toHSB(seg.getMean());
-            float[] stdev_hsb = toHSB(seg.getStdDeviation());
-            float[] skew_hsb = toHSB(seg.getSkewness());
+//            float[] mean_hsb = toHSB(seg.getMean());
+//            float[] stdev_hsb = toHSB(seg.getStdDeviation());
+//            float[] skew_hsb = toHSB(seg.getSkewness());
+            float[] mean_hsb = seg.getMean();
+            float[] stdev_hsb = seg.getStdDeviation();
+            float[] skew_hsb = seg.getSkewness();
             for (int i = 0; i < Segment.MODEL_NUM_ELEMENTS; i++) {
                 addter.add(mean_hsb[i]);// * (i == 0 ? 3 : 1));
                 addter.add(stdev_hsb[i]);// * (i == 0 ? 3 : 1));
@@ -123,7 +127,7 @@ public class Analyzer {
                 ziskam tak hodnotu podobnosti obrazku z intervalu [0;1]
             */
             /* original - ze specifikace */
-            addter.add((float)Math.log((double)o_width / o_height));
+            addter.add((float)Math.log((double)o_width / o_height + 1));
             addter.add((float)Math.log(o_area));
             addter.add((float)seg.getSumPixels() / o_area);
 //            addter.add((float)seg.getX());

@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.Request;
+import com.kappa_labs.ohunter.server.analyzer.Analyzer;
 
 
 public class SearchRequest extends com.kappa_labs.ohunter.lib.requests.SearchRequest {
@@ -61,6 +62,9 @@ public class SearchRequest extends com.kappa_labs.ohunter.lib.requests.SearchReq
             place.photos = photos;
             photos.stream().forEach((photo) -> {
                 PlacesGetter.photoRequest(photo, width, height);
+                if (Analyzer.isNight(photo)) {
+                    photo.daytime = Photo.DAYTIME.NIGHT;
+                }
             });
             
             places.add(place);

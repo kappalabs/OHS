@@ -65,6 +65,9 @@ public class Segment {
         Segment[] segms = new Segment[means.length];
         
         for (int i = 0; i < means.length; i++) {
+            if (means[i] == null) {
+                continue;
+            }
             segms[i] = new Segment();
             
             segms[i].x = means[i].x;
@@ -106,8 +109,10 @@ public class Segment {
         //NOTE: predpoklad hodnot barev z intervalu [0; 1]
         for (int i = 0; i < means.length; i++) {
             for (int j = 0; j < MODEL_NUM_ELEMENTS; j++) {
-                segms[i].std_deviation[j] = (float)(255.f * Math.sqrt(segms[i].std_deviation[j] / segms[i].sum_pixels));
-                segms[i].skewness[j] = (float)(255.f * Math.cbrt(segms[i].skewness[j] / segms[i].sum_pixels));
+//                segms[i].std_deviation[j] = (float)(255.f * Math.sqrt(segms[i].std_deviation[j] / segms[i].sum_pixels));
+//                segms[i].skewness[j] = (float)(255.f * Math.cbrt(segms[i].skewness[j] / segms[i].sum_pixels));
+                segms[i].std_deviation[j] = (float) Math.sqrt(segms[i].std_deviation[j] / segms[i].sum_pixels);
+                segms[i].skewness[j] = (float) Math.cbrt(segms[i].skewness[j] / segms[i].sum_pixels);
 //                System.out.println("std:sk = " + String.format(Locale.ENGLISH, "%.02f", segms[i].std_deviation[j])
 //                + " x " + String.format(Locale.ENGLISH, "%.02f", segms[i].skewness[j]));
             }

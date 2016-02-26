@@ -186,6 +186,7 @@ public class OHunterServer {
             System.err.println("analyzer needs resource images in "+ANALYZER);
             return;
         }
+        int i = 1;
         for (String fname1 : fanalyze) {
             System.out.println("First image: "+fname1);
             loadImg(ANALYZER + fname1, ph1);
@@ -198,7 +199,7 @@ public class OHunterServer {
 //                photoConnect(ANALYZER_RESULTS, ph1, ph2, (int)((1.f - similarity)*100)+"%");
                 photoConnect(ANALYZER_RESULTS, ph1, ph2, (int)(similarity*10) + "");
 //                photoConnect(ANALYZER_RESULTS, ph1, ph2, similarity + "");
-                System.out.println("--------------");
+                System.out.println("-("+(i++)+")--------------");
             }
             System.out.println("--------------");
         }
@@ -248,12 +249,12 @@ public class OHunterServer {
 //        System.out.println("\nTesting analyzer:");
 //        System.out.println("==============");
 //        testAnalyzer();
-        System.out.println("\nTesting night recognizer:");
-        System.out.println("==============");
-        testNight();
-//        System.out.println("\nTesting server:");
+//        System.out.println("\nTesting night recognizer:");
 //        System.out.println("==============");
-//        startServer();
+//        testNight();
+        System.out.println("\nTesting server:");
+        System.out.println("==============");
+        startServer();
 //        
 //        Client c = new Client();
     }

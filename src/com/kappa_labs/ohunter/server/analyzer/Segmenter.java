@@ -10,7 +10,11 @@ import com.kappa_labs.ohunter.server.entities.Segment;
 import com.kappa_labs.ohunter.server.utils.CIELab;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Random;
+import javax.imageio.ImageIO;
 
 /**
  * Class for image segmentation.
@@ -45,13 +49,23 @@ public class Segmenter {
      *      segment, that was found.
      */
     public static Segment[] segment(Photo photo) {
+        /* Save the image before segmentation into local file */
+        try {
+            ImageIO.write(((SImage)photo.image).toBufferedImage(), "jpg", new File("nonsegmented-" + photo.toString() + (a) + ".jpg"));
+        } catch (IOException ex) {
+//            Logger.getLogger(Segmenter.class.getName()).log(Level.WARNING, null, ex);
+        }
+        
         /* CIELab model is used to reduce the number of dimension that must be used */
-        CIELab ciel = CIELab.getInstance();
+//        CIELab ciel = CIELab.getInstance();
         Pixel[][] labs = new Pixel[photo.getWidth()][photo.getHeight()];
         for (int i = 0; i < photo.getWidth(); i++) {
             for (int j = 0; j < photo.getHeight(); j++) {
                 Color col = new Color(((SImage)photo.image).toBufferedImage().getRGB(i, j));
-                float[] cils = ciel.fromRGB(col.getColorComponents(null));
+//                float[] cils = ciel.fromRGB(col.getColorComponents(null));
+//                labs[i][j] = new Pixel(cils, i, j);
+                float[] cils = new float[3];
+                Color.RGBtoHSB(col.getRed(), col.getGreen(), col.getBlue(), cils);
                 labs[i][j] = new Pixel(cils, i, j);
             }
         }
@@ -64,7 +78,8 @@ public class Segmenter {
             for (int j = 0; j < mi.height; j++) {
                 Pixel px = mi.getPixel(i, j);
                 Pixel cpx = means[px.centroid];
-                int col = cpx.getRGBValue();
+//                int col = cpx.getRGBValue();
+                int col = Color.HSBtoRGB(cpx.get(0), cpx.get(1), cpx.get(2));
                 nbi.setRGB(i, j, col);
             }
         }
@@ -72,12 +87,12 @@ public class Segmenter {
         for (Pixel px : means) {
             nbi.setRGB(px.x, px.y, 0xFFFF0000);
         }
-//        /* Save the segmented image into local file */
-//        try {
-//            ImageIO.write(nbi, "jpg", new File("segmented-" + photo.toString() + ".jpg"));
-//        } catch (IOException ex) {
+        /* Save the segmented image into local file */
+        try {
+            ImageIO.write(nbi, "jpg", new File("segmented-" + photo.toString() + (a++) + ".jpg"));
+        } catch (IOException ex) {
 //            Logger.getLogger(Segmenter.class.getName()).log(Level.WARNING, null, ex);
-//        }
+        }
         /* Save it into a field in the Photo object */
         photo._image = new SImage(nbi);
         
@@ -85,6 +100,7 @@ public class Segmenter {
         
         return segs;
     }
+    static int a = 1;
     
     /**
      * Firstly find the best starting random pixels, then continue with regular
@@ -142,7 +158,7 @@ public class Segmenter {
             }
             for (Pixel px : img) {
                 for (int i = 0; i < NUM_SEGMENTS; i++) {
-                    if (px.distance(means[i]) < px.distance) {
+                    if (means[i] != null && px.distance(means[i]) < px.distance) {
                         px.distance = px.distance(means[i]);
                         px.centroid = i;
                     }
@@ -151,6 +167,7 @@ public class Segmenter {
                 centroids[px.centroid].addPixel(px);
             }
             for (int i = 0; i < NUM_SEGMENTS; i++) {
+                // TODO: kontrola nulovosti -> odstraneni segmentu
                 means[i] = centroids[i].getMean();
             }
         }

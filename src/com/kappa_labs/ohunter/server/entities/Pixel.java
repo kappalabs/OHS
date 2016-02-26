@@ -114,10 +114,17 @@ public class Pixel {
     public double distance(Pixel second) {
 //        return Math.sqrt(.02*Math.pow(second.x - this.x, 2) + .02*Math.pow(second.y - this.y, 2) +
 //                .32*Math.pow(second.l - this.l, 2) + .32*Math.pow(second.a - this.a, 2) + .32*Math.pow(second.b - this.b, 2));
+        
+        if (this.x == second.x && this.y == second.y) {
+            return 0;
+        }
+        /* NOTE: pro HSV model */
+        return 0.0000001 + Math.sqrt(.000005*Math.pow(second.x - this.x, 2) + .000005*Math.pow(second.y - this.y, 2) +
+                .33333*Math.pow(second.l - this.l, 2) + .33333*Math.pow(second.a - this.a, 2) + .33333*Math.pow(second.b - this.b, 2));
 //        
         /* NOTE: vyuziti vyhody CIELab modelu - pouziti pouze dvou dimenzi pro barvy */
-        return Math.sqrt(.1*Math.pow(second.x - this.x, 2) + .1*Math.pow(second.y - this.y, 2) +
-                .4*Math.pow(second.l - this.l, 2) + .4*Math.pow(second.a - this.a, 2));
+//        return Math.sqrt(.1*Math.pow(second.x - this.x, 2) + .1*Math.pow(second.y - this.y, 2) +
+//                .4*Math.pow(second.l - this.l, 2) + .4*Math.pow(second.a - this.a, 2));
         
         
 //        return Math.sqrt(.1*Math.pow(second.x - this.x, 2) + .1*Math.pow(second.y - this.y, 2))

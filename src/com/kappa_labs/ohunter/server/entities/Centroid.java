@@ -33,6 +33,7 @@ public class Centroid extends Pixel {
      * @return The mean pixel, counted from all added pixels.
      */
     public Pixel getMean() {
-        return sum.divide(numPixels);
+        // TODO: neplatne centroidy netvori zadne segmenty - nejak je odstranit?
+        return (numPixels == 0) ? new Pixel(0, 0, 0) : sum.divide(numPixels);
     }
 }
