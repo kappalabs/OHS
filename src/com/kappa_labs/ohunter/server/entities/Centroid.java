@@ -7,7 +7,7 @@ package com.kappa_labs.ohunter.server.entities;
 public class Centroid extends Pixel {
     
     private int numPixels;
-    private Pixel sum;
+    private final Pixel sum;
 
     /**
      * Creates new Centroid object, the Pixel is initialized to zeros.
@@ -30,10 +30,10 @@ public class Centroid extends Pixel {
     /**
      * Counts the mean of all pixels, which were added.
      * 
-     * @return The mean pixel, counted from all added pixels.
+     * @return The mean pixel, counted from all added pixels, null if no pixel
+     * is assigned to this centroid.
      */
     public Pixel getMean() {
-        // TODO: neplatne centroidy netvori zadne segmenty - nejak je odstranit?
-        return (numPixels == 0) ? new Pixel(0, 0, 0) : sum.divide(numPixels);
+        return (numPixels == 0) ? null : sum.divide(numPixels);
     }
 }

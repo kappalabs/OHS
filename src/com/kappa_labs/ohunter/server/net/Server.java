@@ -12,16 +12,22 @@ import java.io.IOException;
 import java.io.InvalidClassException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 
 /**
  * Class providing the server actions, services for clients.
@@ -29,11 +35,10 @@ import java.util.logging.Logger;
 public class Server {
 
     public static final int PORT = 4242;
-//    public static final String ADDRESS = "localhost";
-//    public static final String ADDRESS = "192.168.1.196";   // AP doma
-//    public static final String ADDRESS = "192.168.42.56"; // USB tether
-    public static final String ADDRESS = "192.168.43.144"; // Android AP
     public static final int NUM_THREADS = 4;
+    
+    private String address;
+    private int port;
     
     
     /**
@@ -45,7 +50,9 @@ public class Server {
         
         try {
             server = new ServerSocket();
-            SocketAddress addr = new InetSocketAddress(ADDRESS, PORT);
+            address = findServerIP();
+            port = PORT;
+            SocketAddress addr = new InetSocketAddress(address, port);
             server.bind(addr);
             System.out.println("name: "+addr.toString());
         
@@ -69,11 +76,9 @@ public class Server {
                         System.err.println("Serializace je inkompatibilni!");
                     }
                     request = RequestFactory.buildRequest(request);
-//                    System.out.println("request "+(request == null ? "je" : "neni") + " null");
                     ClientWorker cw = new ClientWorker(request, oos, client);
                     executor.execute(cw);
                     System.out.println("Request odeslan executoru");
-//                    client.close();
                 } catch (IOException ex) {
                     System.err.println(ex);
                     Logger.getLogger(Server.class.getName()).log(Level.WARNING, null, ex);
@@ -98,6 +103,60 @@ public class Server {
                 }
             }
         }
+    }
+    
+    private String findServerIP() {
+        try {
+            Enumeration<NetworkInterface> n = NetworkInterface.getNetworkInterfaces();
+            ArrayList<String> adds = new ArrayList<>();
+            adds.add("custom");
+            for (; n.hasMoreElements();) {
+                NetworkInterface e = n.nextElement();
+                
+                Enumeration<InetAddress> a = e.getInetAddresses();
+                for (; a.hasMoreElements();) {
+                    InetAddress addr = a.nextElement();
+                    adds.add(addr.getHostAddress());
+                }
+            }
+            
+            System.out.println("Available IPs:");
+            for (int i = 0; i < adds.size(); i++) {
+                    System.out.println("[" + i + "] " + adds.get(i));
+            }
+            
+            System.out.print("Choose server IP address index: ");
+            Scanner sc = new Scanner(System.in);
+            int index = sc.nextInt();
+            if (index > 0 && index < adds.size()) {
+                return adds.get(index);
+            } else if (index == 0) {
+                System.out.print("Write the custom address: ");
+                String in = sc.next();
+                return in;
+            }
+        } catch (SocketException ex) {
+            Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return "localhost";
+    }
+
+    /**
+     * Gets the current server address.
+     * 
+     * @return The current server address.
+     */
+    public String getAddress() {
+        return address;
+    }
+
+    /**
+     * Gets the current server port.
+     * 
+     * @return The current server port.
+     */
+    public int getPort() {
+        return port;
     }
     
     private class ServerService implements Runnable {
@@ -168,12 +227,12 @@ public class Server {
             try {
                 System.out.println("Request prijmut k provedeni");
                 Response response = null;
-                if (mRequest instanceof SearchRequest) {
-                    ObjectInputStream ois = new ObjectInputStream(new FileInputStream(Client.objFile));
-                    response = (Response) ois.readObject();
-                } else {
+//                if (mRequest instanceof SearchRequest) {
+//                    ObjectInputStream ois = new ObjectInputStream(new FileInputStream(Client.objFile));
+//                    response = (Response) ois.readObject();
+//                } else {
                     response = mRequest.execute();
-                }
+//                }
                 System.out.println("request spocitan, odesilam...");
                 mOutput.writeObject(response);
                 System.out.println("respond odeslan, klient obslouzen ---------------");
@@ -189,10 +248,9 @@ public class Server {
                 }
             } catch (IOException ex) {
                 Logger.getLogger(Server.class.getName()).log(Level.WARNING, null, ex);
-            } catch (ClassNotFoundException ex) {
-                Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
-            } 
-            finally {
+//            } catch (ClassNotFoundException ex) {
+//                Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+            } finally {
                 try {
                     mOutput.close();
                     mClient.close();

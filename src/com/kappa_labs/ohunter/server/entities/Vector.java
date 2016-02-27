@@ -3,7 +3,6 @@ package com.kappa_labs.ohunter.server.entities;
 
 import com.kappa_labs.ohunter.server.utils.Addable;
 import com.kappa_labs.ohunter.server.utils.Addterator;
-import java.text.DecimalFormat;
 import java.util.Locale;
 
 /**
@@ -63,14 +62,7 @@ public class Vector implements Addable<Float> {
         float sum = 0;
         for (int i = 0; i < dimension; i++) {
             sum += Math.abs(get(i) - vectTo.get(i));
-//            sum += Math.min(Math.abs(get(i) - vectTo.get(i)), 1.f);
         }
-        
-        /* Normalize into [0; 1] interval */
-//        sum /= vectTo.dimension;
-        
-        //NOTE: did not work well
-//        sum = Math.min(sum, 1.f);
         
         return sum;
     }
@@ -113,11 +105,13 @@ public class Vector implements Addable<Float> {
     @Override
     public String toString() {
         String ret = "Vector: ["+dimension+"] (";
-        for (float value : values) {
-            ret += String.format(Locale.ENGLISH, "%.02f", value) + ";  ";
+        for (int i = 0; i < values.length; i++) {
+            ret += String.format(Locale.ENGLISH, "%d:%.02f", i+1, values[i]);
+            if (i != values.length - 1) {
+                 ret += "; ";
+            }
         }
-        ret += ")";
-        return ret;
+        return ret + ")";
     }
     
 }

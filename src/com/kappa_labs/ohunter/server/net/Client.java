@@ -18,18 +18,32 @@ import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+
 /**
  * For testing purposes only.
  */
 public class Client {
 
-    
     public static String objFile = "response.obj";
     
-    public Client() {
+    private final String address;
+    private final int port;
+    
+    
+    public Client(Server server) {
+        this.address = server.getAddress();
+        this.port = server.getPort();
+    }
+    
+    public Client(String address, int port) {
+        this.address = address;
+        this.port = port;
+    }
+    
+    public void connect() {
         try {
             System.out.println("Pred new socketem");
-            Socket server = new Socket(Server.ADDRESS, Server.PORT);
+            Socket server = new Socket(address, port);
             try {
                 System.out.println("Pred oos");
                 ObjectOutputStream oos = new ObjectOutputStream(server.getOutputStream());
@@ -87,8 +101,11 @@ public class Client {
     }
     
     public static void main(String[] args) {
-        Client client = new Client();
-        System.out.println("Working Directory = " +
-              System.getProperty("user.dir"));
+        Server server = new Server();
+        server.runServer();
+        
+        Client client = new Client(server);
+        System.out.println("Working Directory = " + System.getProperty("user.dir"));
+        client.connect();
     }
 }

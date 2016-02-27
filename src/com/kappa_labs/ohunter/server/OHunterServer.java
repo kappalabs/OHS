@@ -28,6 +28,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 
+
 /**
  * Provides series of test methods.
  */
@@ -41,19 +42,20 @@ public class OHunterServer {
     private static final String ANALYZER_RESULTS = RESULTS + "analyzer/";
     private static final String MODEL_RESULTS = RESULTS + "models/";
     
-    private static String[] fanalyze;
-    private static String[] fdmodels;
-    private static String[] fdark;
+    private static final String[] FILES_ANALYZE;
+    private static final String[] FILES_MODEL;
+    private static final String[] FILES_DARK;
     
     static {
         FilenameFilter fnf = ((File dir, String name) -> name.matches(".*\\.(png|jpg|jpeg)$"));
         File fan = new File(ANALYZER);
-        fanalyze = fan.list(fnf);
+        FILES_ANALYZE = fan.list(fnf);
         File fmo = new File(DARK_MODELS);
-        fdmodels = fmo.list(fnf);
+        FILES_MODEL = fmo.list(fnf);
         File fda = new File(DARK);
-        fdark = fda.list(fnf);
+        FILES_DARK = fda.list(fnf);
     }
+    
     
     private static void testDatabase() throws RemoteException {
         /* Vypis obsahu databaze */
@@ -145,16 +147,16 @@ public class OHunterServer {
         Photo ph1 = new Photo();
         Photo ph2 = new Photo();
         
-        if (fdark == null) {
+        if (FILES_DARK == null) {
             System.err.println("night test needs resource images in "+DARK);
             return;
         }
-        if (fdmodels == null) {
+        if (FILES_MODEL == null) {
             System.err.println("night test needs model images in "+DARK_MODELS);
             return;
         }
         
-        for (String dark : fdark) {
+        for (String dark : FILES_DARK) {
             System.out.println("Dark image: "+dark);
             loadImg(DARK + dark, ph1);
             if (Analyzer.isNight(ph1)) {
@@ -162,7 +164,7 @@ public class OHunterServer {
             } else {
                 System.out.println(" - not at night");
             }
-            for (String model : fdmodels) {
+            for (String model : FILES_MODEL) {
                 System.out.println(" -> against model: "+model);
                 loadImg(DARK_MODELS + model, ph2);
                 float similarity = Analyzer.computeSimilarity(ph1, ph2);
@@ -182,22 +184,22 @@ public class OHunterServer {
         Photo ph1 = new Photo();
         Photo ph2 = new Photo();
         
-        if (fanalyze == null) {
+        if (FILES_ANALYZE == null) {
             System.err.println("analyzer needs resource images in "+ANALYZER);
             return;
         }
         int i = 1;
-        for (String fname1 : fanalyze) {
+        for (String fname1 : FILES_ANALYZE) {
             System.out.println("First image: "+fname1);
             loadImg(ANALYZER + fname1, ph1);
-            for (String fname2 : fanalyze) {
+            for (String fname2 : FILES_ANALYZE) {
                 System.out.println(" -> against: "+fname2);
                 loadImg(ANALYZER + fname2, ph2);
                 float similarity = Analyzer.computeSimilarity(ph1, ph2);
                 System.out.println(" -> similarity = " + similarity + ", pc = "
-                        + (1.f - similarity)*100 + "%");
+                        + similarity * 100 + "%");
 //                photoConnect(ANALYZER_RESULTS, ph1, ph2, (int)((1.f - similarity)*100)+"%");
-                photoConnect(ANALYZER_RESULTS, ph1, ph2, (int)(similarity*10) + "");
+                photoConnect(ANALYZER_RESULTS, ph1, ph2, (int)(similarity * 100) + "");
 //                photoConnect(ANALYZER_RESULTS, ph1, ph2, similarity + "");
                 System.out.println("-("+(i++)+")--------------");
             }
@@ -240,6 +242,10 @@ public class OHunterServer {
     private static void startServer() {
         Server server = new Server();
         server.runServer();
+        
+        /* Client test */
+//        Client c = new Client(server);
+//        c.connect();
     }
 
     public static void main(String[] args) {
@@ -255,8 +261,6 @@ public class OHunterServer {
         System.out.println("\nTesting server:");
         System.out.println("==============");
         startServer();
-//        
-//        Client c = new Client();
     }
     
 }

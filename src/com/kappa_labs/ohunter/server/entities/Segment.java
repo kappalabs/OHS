@@ -1,7 +1,7 @@
 
 package com.kappa_labs.ohunter.server.entities;
 
-import java.util.Locale;
+import java.util.ArrayList;
 
 
 /**
@@ -26,11 +26,11 @@ public class Segment {
     /**
      * The second color moment of this segment.
      */
-    private float[] std_deviation;
+    private final float[] std_deviation;
     /**
      * The third color moment of this segment.
      */
-    private float[] skewness;
+    private final float[] skewness;
     /**
      * Number of pixels in this segment.
      */
@@ -72,7 +72,6 @@ public class Segment {
             
             segms[i].x = means[i].x;
             segms[i].y = means[i].y;
-            //NOTE: counted in CIELab
             segms[i].mean = new float[]{means[i].get(0), means[i].get(1), means[i].get(2)};
         }
         
@@ -84,8 +83,10 @@ public class Segment {
             for (int j = 0; j < img.width; j++) {
                 Pixel px = img.getPixel(j, i);
                 Segment segm = segms[px.centroid];
+                if (segm == null) {
+                    continue;
+                }
                 for (int k = 0; k < MODEL_NUM_ELEMENTS; k++) {
-                    //NOTE: counted in CIELab
                     segm.std_deviation[k] += Math.pow(px.get(k) - segm.mean[k], 2);
                     segm.skewness[k] += Math.pow(px.get(k) - segm.mean[k], 3);
                 }
@@ -106,17 +107,24 @@ public class Segment {
                 }
             }
         }
-        //NOTE: predpoklad hodnot barev z intervalu [0; 1]
+        /* Count standard deviation and skewness */
         for (int i = 0; i < means.length; i++) {
             for (int j = 0; j < MODEL_NUM_ELEMENTS; j++) {
-//                segms[i].std_deviation[j] = (float)(255.f * Math.sqrt(segms[i].std_deviation[j] / segms[i].sum_pixels));
-//                segms[i].skewness[j] = (float)(255.f * Math.cbrt(segms[i].skewness[j] / segms[i].sum_pixels));
-                segms[i].std_deviation[j] = (float) Math.sqrt(segms[i].std_deviation[j] / segms[i].sum_pixels);
-                segms[i].skewness[j] = (float) Math.cbrt(segms[i].skewness[j] / segms[i].sum_pixels);
-//                System.out.println("std:sk = " + String.format(Locale.ENGLISH, "%.02f", segms[i].std_deviation[j])
-//                + " x " + String.format(Locale.ENGLISH, "%.02f", segms[i].skewness[j]));
+                if (segms[i] != null) {
+                    segms[i].std_deviation[j] = (float) Math.sqrt(segms[i].std_deviation[j] / segms[i].sum_pixels);
+                    segms[i].skewness[j] = (float) Math.cbrt(segms[i].skewness[j] / segms[i].sum_pixels);
+                }
             }
         }
+        
+        /* Remove invalid segments */
+        ArrayList<Segment> ss_ = new ArrayList<>();
+        for (Segment s : segms) {
+            if (s != null) {
+                ss_.add(s);
+            }
+        }
+        segms = ss_.toArray(new Segment[0]);
         
         return segms;
     }

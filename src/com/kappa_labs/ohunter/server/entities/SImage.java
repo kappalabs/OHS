@@ -46,7 +46,7 @@ public class SImage extends com.kappa_labs.ohunter.lib.entities.SImage {
     }
     
     /**
-     * Convert given BufferedImage to byte array with 3-byte BGR type.
+     * Convert given BufferedImage to byte array in PNG format.
      * 
      * @param bi BufferedImage to be converted.
      * @return Byte array representation of the BufferedImage image data.
@@ -54,7 +54,7 @@ public class SImage extends com.kappa_labs.ohunter.lib.entities.SImage {
     public static byte[] toBytes(BufferedImage bi) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
-            ImageIO.write(bi, "jpeg", baos);
+            ImageIO.write(bi, "png", baos);
         } catch (IOException ex) {
             Logger.getLogger(SImage.class.getName()).log(Level.SEVERE, null, ex);
             return null;

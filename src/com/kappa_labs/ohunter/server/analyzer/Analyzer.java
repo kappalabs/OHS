@@ -13,6 +13,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.Locale;
 import java.util.Random;
 import javax.imageio.ImageIO;
 
@@ -32,7 +33,7 @@ public class Analyzer {
 
     /**
      * For given two photos, count their similarity. The result is from interval
-     * [0;1], 0 means perfect match, 1 totaly different.
+     * [0;1], 1 means perfect match, 0 totaly different.
      * 
      * @param ph1 First photo.
      * @param ph2 Second photo.
@@ -45,8 +46,8 @@ public class Analyzer {
         try {
             ph1.image = ph1._image = new SImage(ph1.image);
             ph2.image = ph2._image = new SImage(ph2.image);
-            ((SImage)ph1.image).setImage(resize(((SImage)ph1._image).toBufferedImage(), OPTIMAL_WIDTH, OPTIMAL_HEIGHT));
-            ((SImage)ph2.image).setImage(resize(((SImage)ph2._image).toBufferedImage(), OPTIMAL_WIDTH, OPTIMAL_HEIGHT));
+            ((SImage)ph1.image).setImage(resize(((SImage)ph1._image).toBufferedImage()));
+            ((SImage)ph2.image).setImage(resize(((SImage)ph2._image).toBufferedImage()));
         } catch(Exception e) {
             System.err.println("Could not acquire photos from client: "+e);
             e.printStackTrace();
@@ -68,9 +69,20 @@ public class Analyzer {
         
         /* Solve the EMP linear problem and return the final result */
         EMDSolver empm = new EMDSolver(problem);
-        ret = (float) empm.countValue();
+        ret = Math.max(0f, Math.min(1f, (float) empm.countValue()));
         
-        return ret * 10f;
+        return 1f - ret;
+    }
+    
+    /**
+     * Resize input image so that its size matches the optimal image size boundary.
+     * 
+     * @param image The input image to be resized.
+     * @return The resized image matching the optimal size boundary.
+     */
+    public static BufferedImage resize(BufferedImage image) {
+        double divider = Math.max(image.getWidth() / OPTIMAL_WIDTH, image.getHeight() / OPTIMAL_HEIGHT);
+        return resize(image, (int)(image.getWidth() / divider), (int)(image.getHeight() / divider));
     }
     
     /**
@@ -100,21 +112,22 @@ public class Analyzer {
         int max_dimension = Math.max(photo.getWidth(), photo.getHeight());
         for (Segment seg : segments) {
             DistrPair dp = new DistrPair();
-            dp.weight = (double)seg.getSumPixels() / area;
+//            dp.weight = (double)seg.getSumPixels() / area;
+            /* Original method uses sqrt */
+            dp.weight = Math.sqrt((double)seg.getSumPixels() / area);
             Vector vect = new Vector(14);
             Addterator<Float> addter = vect.addterator();
             
             /* Color moments - 9 elements in total */
-//            float[] mean_hsb = toHSB(seg.getMean());
-//            float[] stdev_hsb = toHSB(seg.getStdDeviation());
-//            float[] skew_hsb = toHSB(seg.getSkewness());
             float[] mean_hsb = seg.getMean();
             float[] stdev_hsb = seg.getStdDeviation();
             float[] skew_hsb = seg.getSkewness();
             for (int i = 0; i < Segment.MODEL_NUM_ELEMENTS; i++) {
-                addter.add(mean_hsb[i]);// * (i == 0 ? 3 : 1));
-                addter.add(stdev_hsb[i]);// * (i == 0 ? 3 : 1));
-                addter.add(skew_hsb[i]);// * (i == 0 ? 3 : 1));
+                addter.add(mean_hsb[i]);
+                addter.add(stdev_hsb[i]);
+                /* Skeweness is from range [-1;1] */
+//                addter.add(skew_hsb[i] / 2 + 0.5f);
+                addter.add(skew_hsb[i]);
             }
             /* The other elements - another 5 of them */
             int o_width = seg.getRight() - seg.getLeft();
@@ -128,15 +141,12 @@ public class Analyzer {
                 ziskam tak hodnotu podobnosti obrazku z intervalu [0;1]
             */
             /* original - ze specifikace */
-            addter.add((float)Math.log((double)o_width / o_height + 1));
-            addter.add((float)Math.log(o_area));
-            addter.add((float)seg.getSumPixels() / o_area);
-//            addter.add((float)seg.getX());
-//            addter.add((float)seg.getY());
+//            addter.add((float)Math.log((double)o_width / o_height));
+//            addter.add((float)Math.log(o_area));
             /* modified */
-//            addter.add(Math.min((float)o_width / o_height, 1.f));
-//            addter.add((float)(Math.log(o_area) / Math.log(area)));
-//            addter.add((float)seg.getSumPixels() / o_area);
+            addter.add((float)Math.log((double)o_width / o_height + 1)); 
+            addter.add((float)Math.log((double)o_area / area + 1));
+            addter.add((float)seg.getSumPixels() / o_area);
             addter.add((float)seg.getX() / photo.getWidth());
             addter.add((float)seg.getY() / photo.getHeight());
             
@@ -149,7 +159,6 @@ public class Analyzer {
                 problem.distr2.add(dp);
             }
         }
-//        System.out.println("--------");
     }
    
     /**
