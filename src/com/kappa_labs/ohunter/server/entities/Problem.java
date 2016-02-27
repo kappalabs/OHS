@@ -7,6 +7,10 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import scpsolver.problems.LPWizard;
+import scpsolver.problems.LPWizardConstraint;
+import scpsolver.problems.LinearProgram;
+
 
 /**
  * Class for representation and translation of the linear problem to language
@@ -40,6 +44,67 @@ public class Problem {
         } catch (FileNotFoundException ex) {
             Logger.getLogger(Problem.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+    
+    /**
+     * Create an Linear Program for SCPS library from data in this instance.
+     * 
+     * @return The Linear Program for SCPS library.
+     */
+    public LinearProgram toLinearProgram() {
+        LPWizard lpw = new LPWizard();
+        StringBuilder resultBuilder = new StringBuilder();
+        int numC = 1;
+        
+        /* Objective function */
+        for (int i = 0; i < distr1.size(); i++) {
+            for (int j = 0; j < distr2.size(); j++) {
+                resultBuilder.append("f").append(i).append('_').append(j);
+                lpw.plus(resultBuilder.toString(), distr1.get(i).vector.distance(distr2.get(j).vector));
+                resultBuilder.setLength(0);
+            }
+        }
+        
+        /* Variables >= 0 */
+        for (int i = 0; i < distr1.size(); i++) {
+            for (int j = 0; j < distr2.size(); j++) {
+                resultBuilder.append("f").append(i).append('_').append(j);
+                lpw.addConstraint("c" + (numC++), 0, "<=").plus(resultBuilder.toString(), 1);
+                resultBuilder.setLength(0);
+            }
+        }
+        
+        /* Main constraints */
+        LPWizardConstraint lpwc;
+        for (int i = 0; i < distr1.size(); i++) {
+            lpwc = lpw.addConstraint("c" + (numC++), distr1.get(i).weight, ">=");
+            for (int j = 0; j < distr2.size(); j++) {
+                resultBuilder.append("f").append(i).append('_').append(j);
+                lpwc.plus(resultBuilder.toString(), j);
+                resultBuilder.setLength(0);
+            }
+        }
+        for (int j = 0; j < distr2.size(); j++) {
+            lpwc = lpw.addConstraint("c" + (numC++), distr2.get(j).weight, ">=");
+            for (int i = 0; i < distr1.size(); i++) {
+                resultBuilder.append("f").append(i).append('_').append(j);
+                lpwc.plus(resultBuilder.toString(), j);
+                resultBuilder.setLength(0);
+            }
+        }
+        
+        /* Sum of all the variables is 1 */
+        lpwc = lpw.addConstraint("c" + (numC++), 1, "=");
+        for (int i = 0; i < distr1.size(); i++) {
+            for (int j = 0; j < distr2.size(); j++) {
+                resultBuilder.append("f").append(i).append('_').append(j);
+                lpwc.plus(resultBuilder.toString(), 1);
+                resultBuilder.setLength(0);
+            }
+        }
+        
+        lpw.setMinProblem(true);
+        return lpw.getLP();
     }
     
     /**
@@ -112,33 +177,5 @@ public class Problem {
         
         return resultBuilder.toString();
     }
+    
 }
-
-        /* NOTE: not needed, sum through weights is always 1 */
-//        /* Assign minimum */
-//        resultBuilder.append("c").append(condIndx++).append(": ");
-//        for (int i = 0; i < distr1.size(); i++) {
-//            for (int j = 0; j < distr2.size(); j++) {
-//                resultBuilder.append("f").append(i).append('_').append(j);
-//                if (i != distr1.size() - 1 || j != distr2.size() - 1) {
-//                    resultBuilder.append(" + ");
-//                }
-//            }
-//        }
-//        resultBuilder.append(" = min(");
-//        
-//        for (int i = 0; i < distr1.size(); i++) {
-//            resultBuilder.append(distr1.get(i).weight);
-//            if (i != distr1.size() - 1) {
-//                resultBuilder.append(" + ");
-//            }
-//        }
-//        resultBuilder.append(", ");
-//        
-//        for (int j = 0; j < distr2.size(); j++) {
-//            resultBuilder.append(distr2.get(j).weight);
-//            if (j != distr2.size() - 1) {
-//                resultBuilder.append(" + ");
-//            }
-//        }
-//        resultBuilder.append(");\n");

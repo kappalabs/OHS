@@ -50,6 +50,7 @@ public class Analyzer {
         } catch(Exception e) {
             System.err.println("Could not acquire photos from client: "+e);
             e.printStackTrace();
+            //TODO: lepsi throw nejaka OHException
             return 0;
         }
         
@@ -67,7 +68,7 @@ public class Analyzer {
         
         /* Solve the EMP linear problem and return the final result */
         EMDSolver empm = new EMDSolver(problem);
-        ret = empm.countValue();
+        ret = (float) empm.countValue();
         
         return ret * 10f;
     }

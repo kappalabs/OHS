@@ -2,18 +2,16 @@
 package com.kappa_labs.ohunter.server.analyzer;
 
 import com.kappa_labs.ohunter.server.entities.Problem;
-import ilog.concert.IloException;
-import ilog.concert.IloNumExpr;
-import ilog.concert.IloNumVar;
-import ilog.cplex.IloCplex;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-//import lpsolve.*;
-//import org.gnu.glpk.*;
+import scpsolver.lpsolver.LinearProgramSolver;
+import scpsolver.lpsolver.SolverFactory;
+import scpsolver.problems.LPSolution;
+import scpsolver.problems.LinearProgram;
+
 
 /**
  * Class performing the EMP by solving the given Problem.
@@ -25,9 +23,12 @@ import java.util.logging.Logger;
 public class EMDSolver {
     
     public static final String LP_FILE_NAME = "lp_data.mod";
+    public static final String LP_LOG_FILE_NAME = "lp_scps.log";
     
     private final Problem problem;
+    private static LinearProgramSolver solver;
 
+    
     /**
      * Create new EMPMatch and initialize its Problem, which is LP to be solved.
      * 
@@ -42,70 +43,34 @@ public class EMDSolver {
      * 
      * @return The result optimal EMD value.
      */
-    public float countValue() {
-        
-//        try {
-//            IloCplex cplex = new IloCplex();
-//            
-//            IloNumVar x = new IloNumVar[problem.distr1.size()][problem.distr2.size()];
-//            for (int i = 0; i < problem.distr1.size(); i++) {
-//                x[i] = cplex.numVarArray(problem.distr1.size(), 0, Double.MAX_VALUE);
-//            }
-//            //cplex.numVarArray(problem.distr1.size(), 0, Double.MAX_VALUE);
-//            double[] ds = new double[x.length];
-//            for (int i = 0; i < ds.length; i++) {
-//                ds = problem.distr1.get(i).vector.distance(problem.distr2.get(j).vector);
-//            }
-//            cplex.addMinimize(cplex.sum(cplex.prod(1, 2), cplex.prod(1, 2)));
-//        } catch (IloException ex) {
-//            Logger.getLogger(EMDSolver.class.getName()).log(Level.SEVERE, null, ex);
-//        }
-//        
-        problem.saveToMOD(LP_FILE_NAME);
-        
-        float similarity = 0;
-        Process process;
+    public double countValue() {
+        /* Firstly, redirect the output of the library into a log file */
+        PrintStream out_ = System.out;
+        PrintStream ps = null;
         try {
-            process = new ProcessBuilder("lp_solve", "-S1", "-rxli", "./xli_MathProg", LP_FILE_NAME).start();
-            InputStream is = process.getInputStream();
-            InputStreamReader isr = new InputStreamReader(is);
-            BufferedReader br = new BufferedReader(isr);
-            String line;
-
-            while ((line = br.readLine()) != null) {
-//                System.out.println(line);
-                if (line.startsWith("Value of objective function: ")) {
-                    similarity = Float.parseFloat(line.replaceAll("^[^\\d]*", ""));
-                    break;
-                }
-            }
-        } catch (IOException ex) {
+            File f = new File(LP_LOG_FILE_NAME);
+            f.delete();
+            ps = new PrintStream(f);
+            System.setOut(ps);
+        } catch (FileNotFoundException ex) {
             Logger.getLogger(EMDSolver.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        /* NOTE: nepodarilo se mi zprovoznit */
-//        try {
-//            LpSolve lps = LpSolve.readXLI("xli_MathProg", LP_FILE_NAME, "", "-noint", LpSolve.DETAILED);
-////            LpSolve lps = LpSolve.readMps("model.mps", LpSolve.DETAILED);
-//            int solution = lps.solve();
-//            double[] vars = lps.getPtrVariables();
-//            for (double v : vars) {
-//                System.out.println(v);
-//            }
-//            lps.deleteLp();
-//        } catch (LpSolveException ex) {
-//            Logger.getLogger(EMDSolver.class.getName()).log(Level.SEVERE, null, ex);
-//        }
+        /* Create the linear program and find its solution */
+        LinearProgram lp = problem.toLinearProgram();
+        if (solver == null) {
+            solver = SolverFactory.newDefault();
+        }
+        double[] sol = solver.solve(lp);
+        LPSolution lps = new LPSolution(sol, lp);
         
-//        GlpkSolver solver = GlpkSolver.readModel(problem.toMathProg(), null, null); //GlpkSolver.readMps(LP_FILE_NAME);
-//        int retint = solver.simplex();
-//        System.out.println("retint = "+retint);
-//        double objval = solver.getObjVal();
-//        System.out.println("objval = "+objval);
+        /* Redirect the output stream back */
+        System.setOut(out_);
+        if (ps != null) {
+            ps.close();
+        }
         
-        return similarity;
+        return lps.getObjectiveValue();
     }
     
-    
-
 }
