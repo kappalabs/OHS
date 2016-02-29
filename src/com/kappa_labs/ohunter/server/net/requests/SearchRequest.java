@@ -44,9 +44,9 @@ public class SearchRequest extends com.kappa_labs.ohunter.lib.requests.SearchReq
         /* Turn them to Photo objects, filter blocked and rejected */
         all_places = all_places.stream().filter((Place place) -> {
             try {
-                return !ds.isCompleted(player, place.place_id)
-                        && !ds.isBlocked(place.place_id)
-                        && !ds.isRejected(player, place.place_id);
+                return !ds.isCompleted(player, place.getID())
+                        && !ds.isBlocked(place.getID())
+                        && !ds.isRejected(player, place.getID());
             } catch (OHException ex) {
 //                    throw new OHException(keyWord); //NOTE: nelze z lambdy, nutno pres RuntimeEx
                 throw new RuntimeException(ex);
@@ -55,7 +55,7 @@ public class SearchRequest extends com.kappa_labs.ohunter.lib.requests.SearchReq
         
         ArrayList<Place> places = new ArrayList<>();
         all_places.stream().forEach((place) -> {
-            ArrayList<Photo> photos = PlacesGetter.details(place.place_id);
+            ArrayList<Photo> photos = PlacesGetter.details(place);
             if (photos == null) {
                 return;
             }

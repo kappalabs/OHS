@@ -105,7 +105,7 @@ public class PlacesGetter {
             resultList = new ArrayList<>(array.size());
             for (Object element : array) {
                 Place place = new Place();
-                place.place_id = (String) ((JSONObject) element).get("place_id");
+                place.gfields.put("place_id", (String) ((JSONObject) element).get("place_id"));
                 JSONObject location = (JSONObject)
                         ((JSONObject) ((JSONObject) element).get("geometry")).get("location");
                 place.latitude = (Double) location.get("lat");
@@ -123,12 +123,13 @@ public class PlacesGetter {
     /**
      * Performs request on Google API Place Details. Has acess to aditional information
      * about place, which is specified by place_id. References to photos of this
-     * place will be returned in ArrayList.
+     * place will be returned in ArrayList. Aditional details will be added
+     * to the given Place object.
      * 
-     * @param place_id String, that was returned by Radar Search to specify a place.
+     * @param place Place object with place_id String, that was returned by Radar Search to specify a place.
      * @return ArrayList of photos. They will contain only references, not the image itself yet.
      */
-    public static ArrayList<Photo> details(String place_id) {
+    public static ArrayList<Photo> details(Place place) {
         ArrayList<Photo> photoList = null;
         HttpURLConnection conn = null;
         StringBuilder jsonResults = new StringBuilder();
@@ -138,7 +139,7 @@ public class PlacesGetter {
             sb.append(TYPE_DETAILS);
             sb.append(OUT_JSON);
             sb.append("?key=" + GAPI_KEY);
-            sb.append("&placeid=").append(URLEncoder.encode(place_id, "utf8"));
+            sb.append("&placeid=").append(URLEncoder.encode(place.getID(), "utf8"));
 
             URL url = new URL(sb.toString());
             conn = (HttpURLConnection) url.openConnection();
@@ -174,6 +175,13 @@ public class PlacesGetter {
             if (filterByName(name)) {
                 return null;
             }
+            
+            /* Add aditional information about the place */
+            place.gfields.put("name", name);
+            place.gfields.put("formatted_address", (String) ((JSONObject) result).get("formatted_address"));
+            place.gfields.put("url", (String) ((JSONObject) result).get("url"));
+            place.gfields.put("website", (String) ((JSONObject) result).get("website"));
+            place.gfields.put("icon", (String) ((JSONObject) result).get("icon"));
 
             /* Extract the photo references for this place from the results */
             JSONArray photos = (JSONArray) result.get("photos");
