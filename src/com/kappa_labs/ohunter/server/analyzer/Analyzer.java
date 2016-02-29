@@ -81,7 +81,9 @@ public class Analyzer {
      * @return The resized image matching the optimal size boundary.
      */
     public static BufferedImage resize(BufferedImage image) {
-        double divider = Math.max(image.getWidth() / OPTIMAL_WIDTH, image.getHeight() / OPTIMAL_HEIGHT);
+        double divider = Math.max(
+                (double)image.getWidth() / OPTIMAL_WIDTH,
+                (double)image.getHeight() / OPTIMAL_HEIGHT);
         return resize(image, (int)(image.getWidth() / divider), (int)(image.getHeight() / divider));
     }
     

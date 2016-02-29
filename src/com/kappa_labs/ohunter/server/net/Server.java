@@ -22,6 +22,7 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -161,6 +162,8 @@ public class Server {
     
     private class ServerService implements Runnable {
         
+        private final String PROMPT = "SS: ";
+        
         private final ExecutorService mExecutor;
         private final ServerSocket mServer;
 
@@ -176,34 +179,60 @@ public class Server {
             Scanner sc = new Scanner(System.in);
             
             String text;
-            System.out.print("SS: ");
+            System.out.print(PROMPT);
             while ((text = sc.next()) != null) {
                 switch(text.toLowerCase().trim()) {
                     case "help":
                         System.out.println("ServerService: help\n"
                                 + "help - prints this message\n"
                                 + "state - prints state of the thread pool\n"
+                                + "database - prints table of all players in the database\n"
                                 + "exit - terminate threads and shutdown the server");
                         break;
                     case "state":
                         System.out.println("ServerService: " + mExecutor.toString());
                         break;
+                    case "database":
+                        Database.getInstance().showPlayers();
+                        break;
+                    case "del-player":
+                        deletePlayer(sc);
+                        break;
                     case "exit":
-                        mExecutor.shutdown();
-                        while(!mExecutor.isTerminated()) {
-                            /* Wait for termination of all threads */
-                        }
-                        try {
-                            mServer.close();
-                        } catch (IOException ex) {
-                            Logger.getLogger(Server.class.getName()).log(Level.WARNING, null, ex);
-                        }
+                        shutdown();
+                        sc.close();
                         System.out.println("ServerService: all threads down");
                         return;
                     default:
                         System.out.println("ServerService: unknown command, try 'help'");
                 }
-                System.out.print("SS: ");
+                System.out.print(PROMPT);
+            }
+        }
+        
+        private void deletePlayer(Scanner sc) {
+            System.out.print(" -> Insert player ID: ");
+            try {
+                int id = Integer.parseInt(sc.next());
+                if (Database.getInstance().removePlayer(id)) {
+                    System.out.println(" -> OK, player removed");
+                } else {
+                    System.out.println(" -> ERROR when removing");
+                }
+            } catch (NumberFormatException ex) {
+                System.err.println(" -> wrong number format");
+            }
+        }
+        
+        private void shutdown() {
+            mExecutor.shutdown();
+            while(!mExecutor.isTerminated()) {
+                /* Wait for termination of all threads */
+            }
+            try {
+                mServer.close();
+            } catch (IOException ex) {
+                Logger.getLogger(Server.class.getName()).log(Level.WARNING, null, ex);
             }
         }
         

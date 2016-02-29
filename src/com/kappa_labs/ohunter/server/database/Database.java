@@ -204,7 +204,7 @@ public class Database {
         }
     }
 
-    protected boolean removePlayer(int ID) {
+    public boolean removePlayer(int ID) {
         /* Before doing anything, check (-> instantiate) the DB connector */
         tryInitConnection();
 
