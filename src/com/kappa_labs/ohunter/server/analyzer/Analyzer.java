@@ -40,7 +40,7 @@ public class Analyzer {
      * @return Similarity of given photos from interval [0;1];
      */
     public static float computeSimilarity(Photo ph1, Photo ph2) {
-        float ret;
+        float ret = 0;
         
         /* Scale the images to provide the best results */
         try {
@@ -55,21 +55,27 @@ public class Analyzer {
             return 0;
         }
         
-        /* Perform segmentation */
-        Segment[] segs1 = Segmenter.segment(ph1);
-        Segment[] segs2 = Segmenter.segment(ph2);
-//        System.out.println("... mam "+segs1.length+" prvnich a "+segs2.length+" druhych");
-        
-        /* Create new Problem from given counted segments */
-        Problem problem = new Problem();
-        prepareDistribution(problem, segs1, ph1, true);
-        prepareDistribution(problem, segs2, ph2, false);
-        
-//        System.out.println("LP:\n"+problem.toMathProg());
-        
-        /* Solve the EMP linear problem and return the final result */
-        EMDSolver empm = new EMDSolver(problem);
-        ret = Math.max(0f, Math.min(1f, (float) empm.countValue()));
+        /* Count average from few attempts */
+        final int poc = 5;
+        int iteration = poc;
+        while (iteration-- > 0) {
+            /* Perform segmentation */
+            Segment[] segs1 = Segmenter.segment(ph1);
+            Segment[] segs2 = Segmenter.segment(ph2);
+            System.out.println("... mam "+segs1.length+" prvnich a "+segs2.length+" druhych");
+
+            /* Create new Problem from given counted segments */
+            Problem problem = new Problem();
+            prepareDistribution(problem, segs1, ph1, true);
+            prepareDistribution(problem, segs2, ph2, false);
+
+    //        System.out.println("LP:\n"+problem.toMathProg());
+
+            /* Solve the EMP linear problem and return the final result */
+            EMDSolver empm = new EMDSolver(problem);
+            ret += Math.max(0f, Math.min(1f, (float) empm.countValue()));
+        }
+        ret /= poc;
         
         return 1f - ret;
     }

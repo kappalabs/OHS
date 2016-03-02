@@ -63,6 +63,23 @@ public class Pixel {
     }
     
     /**
+     * Create a deep copy of given Pixel.
+     * 
+     * @param pixel The Pixel to be copied.
+     */
+    public Pixel(Pixel pixel) {
+        this.h = pixel.h;
+        this.s = pixel.s;
+        this.v = pixel.v;
+        
+        this.x = pixel.x;
+        this.y = pixel.y;
+        
+        this.centroid = pixel.centroid;
+        this.distance = pixel.distance;
+    }
+    
+    /**
      * Get i-th color element of this pixel.
      * 0 is Hue, 1 is Saturation, 2 is Value, otherwise return NaN.
      * 
@@ -93,7 +110,7 @@ public class Pixel {
     public double distance(Pixel second) {
 //        /* NOTE: pro HSV model */
 //        return 0.00000001 + Math.sqrt(.0000005*Math.pow(second.x - this.x, 2) + .0000005*Math.pow(second.y - this.y, 2) +
-//                .333333*Math.pow(second.l - this.l, 2) + .333333*Math.pow(second.a - this.a, 2) + .333333*Math.pow(second.b - this.b, 2));
+//                .333333*Math.pow(second.h - this.h, 2) + .333333*Math.pow(second.s - this.s, 2) + .333333*Math.pow(second.v - this.v, 2));
         
         return Math.sqrt(Math.pow(second.h - this.h, 2)
                 + Math.pow(second.s - this.s, 2)  + Math.pow(second.v - this.v, 2));

@@ -22,6 +22,7 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.InputMismatchException;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
@@ -128,13 +129,17 @@ public class Server {
             
             System.out.print("Choose server IP address index: ");
             Scanner sc = new Scanner(System.in);
-            int index = sc.nextInt();
-            if (index > 0 && index < adds.size()) {
-                return adds.get(index);
-            } else if (index == 0) {
-                System.out.print("Write the custom address: ");
-                String in = sc.next();
-                return in;
+            try {
+                int index = sc.nextInt();
+                if (index > 0 && index < adds.size()) {
+                    return adds.get(index);
+                } else if (index == 0) {
+                    System.out.print("Write the custom address: ");
+                    String in = sc.next();
+                    return in;
+                }
+            } catch (InputMismatchException ex) {
+                System.err.println("Input must be integer!");
             }
         } catch (SocketException ex) {
             Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
@@ -187,6 +192,7 @@ public class Server {
                                 + "help - prints this message\n"
                                 + "state - prints state of the thread pool\n"
                                 + "database - prints table of all players in the database\n"
+                                + "del-player - deletes player with given ID from the database\n"
                                 + "exit - terminate threads and shutdown the server");
                         break;
                     case "state":

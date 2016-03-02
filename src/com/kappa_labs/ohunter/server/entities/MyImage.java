@@ -14,6 +14,7 @@ public class MyImage implements Iterable<Pixel> {
     private Pixel[][] _image;
     public int height, width;
 
+    
     /**
      * Creates a new MyImage object from Pixel array. The first dimension
      * of the array must be width, the second height.
@@ -26,6 +27,32 @@ public class MyImage implements Iterable<Pixel> {
         this.image = image;
         this.width = width;
         this.height = height;
+    }
+    
+    /**
+     * Creates a new deep copy of given MyImage.
+     * 
+     * @param myImage The MyImage to make deep copy of.
+     */
+    public MyImage(MyImage myImage) {
+        this.width = myImage.width;
+        this.height = myImage.height;
+        if (myImage.image != null) {
+            this.image = new Pixel[myImage.width][myImage.height];
+            for (int i = 0; i < this.width; i++) {
+                for (int j = 0; j < this.height; j++) {
+                    this.image[i][j] = new Pixel(myImage.image[i][j]);
+                }
+            }
+        }
+        if (myImage._image != null) {
+            this.image = new Pixel[myImage.width][myImage.height];
+            for (int i = 0; i < this.width; i++) {
+                for (int j = 0; j < this.height; j++) {
+                    this._image[i][j] = new Pixel(myImage._image[i][j]);
+                }
+            }
+        }
     }
     
     /**
@@ -72,6 +99,5 @@ public class MyImage implements Iterable<Pixel> {
             }
         };
     }
-    
     
 }

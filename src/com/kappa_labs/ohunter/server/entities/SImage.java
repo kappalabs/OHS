@@ -46,7 +46,7 @@ public class SImage extends com.kappa_labs.ohunter.lib.entities.SImage {
     }
     
     /**
-     * Convert given BufferedImage to byte array in PNG format.
+     * Convert given BufferedImage to byte array in JPG format.
      * 
      * @param bi BufferedImage to be converted.
      * @return Byte array representation of the BufferedImage image data.
@@ -54,7 +54,7 @@ public class SImage extends com.kappa_labs.ohunter.lib.entities.SImage {
     public static byte[] toBytes(BufferedImage bi) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
-            ImageIO.write(bi, "png", baos);
+            ImageIO.write(bi, "jpg", baos);
         } catch (IOException ex) {
             Logger.getLogger(SImage.class.getName()).log(Level.SEVERE, null, ex);
             return null;
