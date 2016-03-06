@@ -34,6 +34,7 @@ import javax.imageio.ImageIO;
  */
 public class OHunterServer {
     
+    private static final String PHOTOS_DIR = "./photos/";
     private static final String RESOURCES = "./resources/";
     private static final String DARK_MODELS = RESOURCES + "models/";
     private static final String DARK = RESOURCES + "dark/";
@@ -45,6 +46,13 @@ public class OHunterServer {
     private static final String[] FILES_ANALYZE;
     private static final String[] FILES_MODEL;
     private static final String[] FILES_DARK;
+    
+    private static final boolean 
+            TEST_DATABASE = false,
+            TEST_ANALYZER = false,
+            TEST_NIGHT    = false,
+            TEST_SERVER   = true,
+            TEST_CLIENT   = false;
     
     static {
         FilenameFilter fnf = ((File dir, String name) -> name.matches(".*\\.(png|jpg|jpeg)$"));
@@ -111,18 +119,18 @@ public class OHunterServer {
                 
                 Response re_sr = sr.execute();
                 /* Vypis informaci o ziskanych mistech a jejich lokalni ulozeni */
-                System.out.println("saving places into ./" + Place.PHOTOS_DIR + "...");
-                File f = new File(Place.PHOTOS_DIR);
+                System.out.println("saving places into " + PHOTOS_DIR + "...");
+                File f = new File(PHOTOS_DIR);
                 if (f.list() != null && f.list().length != 0) {
                     System.err.println("places directory is not empty");
                 }
                 
                 System.out.println("List of retrieved places:");
-                re_sr.places.stream().forEach((place) -> {
+                for (Place place : re_sr.places) {
                     System.out.println("place: "+place);
 //                    place.saveToFile(null);
 //TODO: novy save to file pristup
-                });
+                }
             } catch (OHException ex) {
                 System.err.println(ex.getMessage());
             }
@@ -132,7 +140,7 @@ public class OHunterServer {
     
     private static void loadImg(String fname, Photo photo) {
         try {
-            photo.image = new SImage(ImageIO.read(new File(fname)));
+            photo.sImage = new SImage(ImageIO.read(new File(fname)));
             photo.reference = fname.replaceAll("\\..{3,4}$", "").replaceAll("^.*/", "");
         } catch (IOException ex) {
             Logger.getLogger(OHunterServer.class.getName()).log(Level.SEVERE, null, ex);
@@ -167,10 +175,15 @@ public class OHunterServer {
             for (String model : FILES_MODEL) {
                 System.out.println(" -> against model: "+model);
                 loadImg(DARK_MODELS + model, ph2);
-                float similarity = Analyzer.computeSimilarity(ph1, ph2);
-                System.out.println(" -> similarity = " + similarity + ", pc = "
-                        + (1.f - similarity)*100 + "%");
-                photoConnect(ANALYZER_RESULTS, ph1, ph2, (int)((1.f - similarity)*100)+"%");
+                float similarity;
+                try {
+                    similarity = Analyzer.computeSimilarity(ph1, ph2);
+                    System.out.println(" -> similarity = " + similarity + ", pc = "
+                            + (1.f - similarity)*100 + "%");
+                    photoConnect(ANALYZER_RESULTS, ph1, ph2, (int)(similarity * 100) + "%");
+                } catch (OHException ex) {
+                    Logger.getLogger(OHunterServer.class.getName()).log(Level.SEVERE, null, ex);
+                }
                 System.out.println("--------------");
             }
             System.out.println("--------------");
@@ -195,12 +208,15 @@ public class OHunterServer {
             for (String fname2 : FILES_ANALYZE) {
                 System.out.println(" -> against: "+fname2);
                 loadImg(ANALYZER + fname2, ph2);
-                float similarity = Analyzer.computeSimilarity(ph1, ph2);
-                System.out.println(" -> similarity = " + similarity + ", pc = "
-                        + similarity * 100 + "%");
-//                photoConnect(ANALYZER_RESULTS, ph1, ph2, (int)((1.f - similarity)*100)+"%");
-                photoConnect(ANALYZER_RESULTS, ph1, ph2, (int)(similarity * 100) + "");
-//                photoConnect(ANALYZER_RESULTS, ph1, ph2, similarity + "");
+                float similarity;
+                try {
+                    similarity = Analyzer.computeSimilarity(ph1, ph2);
+                    System.out.println(" -> similarity = " + similarity + ", pc = "
+                            + similarity * 100 + "%");
+                    photoConnect(ANALYZER_RESULTS, ph1, ph2, (int)(similarity * 100) + "%");
+                } catch (OHException ex) {
+                    Logger.getLogger(OHunterServer.class.getName()).log(Level.SEVERE, null, ex);
+                }
                 System.out.println("-("+(i++)+")--------------");
             }
             System.out.println("--------------");
@@ -215,15 +231,15 @@ public class OHunterServer {
                 ph1.getHeight(), BufferedImage.TYPE_INT_RGB);
         Graphics2D graph = binew.createGraphics();
         graph.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        graph.drawImage(((SImage)ph1._image).toBufferedImage(), 0, 0, null);
-        graph.drawImage(((SImage)ph2._image).toBufferedImage(), ph1.getWidth(), 0, null);
+        graph.drawImage(((SImage)ph1._sImage).toBufferedImage(), 0, 0, null);
+        graph.drawImage(((SImage)ph2._sImage).toBufferedImage(), ph1.getWidth(), 0, null);
         FontMetrics fm = graph.getFontMetrics();
         int strWidth = fm.stringWidth(label);
         graph.setColor(Color.white);
-        graph.fillRect(ph1._image.getWidth() - strWidth/2,
-                ph1._image.getHeight() - fm.getAscent(), strWidth, fm.getAscent());
+        graph.fillRect(ph1._sImage.getWidth() - strWidth/2,
+                ph1._sImage.getHeight() - fm.getAscent(), strWidth, fm.getAscent());
         graph.setColor(Color.red);
-        graph.drawString(label, ph1._image.getWidth() - strWidth/2, ph1._image.getHeight() - 1);
+        graph.drawString(label, ph1._sImage.getWidth() - strWidth/2, ph1._sImage.getHeight() - 1);
         
         
         File resultsFile = new File(directory);
@@ -243,24 +259,38 @@ public class OHunterServer {
         Server server = new Server();
         server.runServer();
         
-        /* Client test */
-//        Client c = new Client(server);
-//        c.connect();
+        if (TEST_CLIENT) {
+            /* Client test */
+            Client c = new Client(server);
+            c.connect();
+        }
     }
 
     public static void main(String[] args) {
-//        System.out.println("Testing database:");
-//        System.out.println("==============");
-//        testDatabase();
-//        System.out.println("\nTesting analyzer:");
-//        System.out.println("==============");
-//        testAnalyzer();
-//        System.out.println("\nTesting night recognizer:");
-//        System.out.println("==============");
-//        testNight();
-        System.out.println("\nTesting server:");
-        System.out.println("==============");
-        startServer();
+        if (TEST_DATABASE) {
+            System.out.println("Testing database:");
+            System.out.println("==============");
+            try {
+                testDatabase();
+            } catch (RemoteException ex) {
+                Logger.getLogger(OHunterServer.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        if (TEST_ANALYZER) {
+            System.out.println("\nTesting analyzer:");
+            System.out.println("==============");
+            testAnalyzer();
+        }
+        if (TEST_NIGHT) {
+            System.out.println("\nTesting night recognizer:");
+            System.out.println("==============");
+            testNight();
+        }
+        if (TEST_SERVER) {
+            System.out.println("\nTesting server:");
+            System.out.println("==============");
+            startServer();
+        }
     }
     
 }

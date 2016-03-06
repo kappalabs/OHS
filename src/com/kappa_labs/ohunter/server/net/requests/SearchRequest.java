@@ -11,7 +11,8 @@ import java.util.stream.Collectors;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.Request;
-import com.kappa_labs.ohunter.server.analyzer.Analyzer;
+import static com.kappa_labs.ohunter.lib.requests.RadarSearchRequest.TYPES;
+import com.kappa_labs.ohunter.server.utils.PlaceFiller;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +26,10 @@ public class SearchRequest extends com.kappa_labs.ohunter.lib.requests.SearchReq
      * Number of threads allowed for PlaceWorkers thread pool.
      */
     private static final int NUM_THREADS = 128;
+    /**
+     * Maximum number of places that will be send to the client.
+     */
+    private static final int MAX_PLACES = 30;
 
     
     public SearchRequest(Player player, double lat, double lng, int radius,
@@ -38,36 +43,36 @@ public class SearchRequest extends com.kappa_labs.ohunter.lib.requests.SearchReq
 
     @Override
     public Response execute() throws OHException {
-        System.out.println("search na "+lat+"; "+lng+"; radius = "+radius);
+        System.out.println("SearchRequest on [" + lat + "; " + lng + "]; radius = " + radius);
         /* Retrieve all possible places */
         ArrayList<Place> all_places;
         all_places = PlacesGetter.radarSearch(lat, lng, radius, "", TYPES);
         
-        // redukce poctu mist!
-        int size = all_places.size();
-        int i = size;
-        // TODO: kam s konstantou?
-        while (--i >= Math.min(size, 30)) {
-            all_places.remove(i);
-        }
-        
+        /* Filter completed, blocked and rejected ones */
         DatabaseService ds = new DatabaseService();
-        /* Turn them to Photo objects, filter blocked and rejected */
         all_places = all_places.stream().filter((Place place) -> {
             try {
                 return !ds.isCompleted(player, place.getID())
                         && !ds.isBlocked(place.getID())
                         && !ds.isRejected(player, place.getID());
             } catch (OHException ex) {
-//                    throw new OHException(keyWord); //NOTE: nelze z lambdy, nutno pres RuntimeEx
+                /* NOTE: Cannot throw new OHException(keyWord) from lambda directly */
                 throw new RuntimeException(ex);
             }
         }).collect(Collectors.toCollection(ArrayList::new));
         
+        /* Reduction of the number of places */
+        int size = all_places.size();
+        int i = size;
+        while (--i >= Math.min(size, MAX_PLACES)) {
+            all_places.remove(i);
+        }
+        
+        /* Parallel download of the Place Details and Photos */
         ArrayList<Place> places = new ArrayList<>();
         ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS);
         for (Place place : all_places) {
-            executor.execute(new PlaceFiller(place, places));
+            executor.execute(new PlaceFiller(place, places, width, height));
         }
         executor.shutdown();
         try {
@@ -76,45 +81,13 @@ public class SearchRequest extends com.kappa_labs.ohunter.lib.requests.SearchReq
             Logger.getLogger(SearchRequest.class.getName()).log(Level.SEVERE, null, ex);
         }
         
+        /* Store the data in Response object */
         Response response = new Response(uid);
-        response.places = places;
+        response.places = places.toArray(new Place[0]);
         
         System.out.println("SearchRequest: I've prepared " + places.size() + " Places.");
          
         return response;
-    }
-
-    /**
-     * Worker class for filling up given Place object with information and photos.
-     */
-    private class PlaceFiller implements Runnable {
-
-        private final Place mPlace;
-        private final ArrayList<Place> mPlaces;
-
-        
-        public PlaceFiller(Place place, ArrayList<Place> places) {
-            this.mPlace = place;
-            this.mPlaces = places;
-        }
-        
-        @Override
-        public void run() {
-            ArrayList<Photo> photos = PlacesGetter.details(mPlace);
-            if (photos == null) {
-                return;
-            }
-            mPlace.photos = photos;
-            photos.stream().forEach((photo) -> {
-                PlacesGetter.photoRequest(photo, width, height);
-                if (Analyzer.isNight(photo)) {
-                    photo.daytime = Photo.DAYTIME.NIGHT;
-                }
-            });
-            
-            mPlaces.add(mPlace);
-        }
-        
     }
     
 }

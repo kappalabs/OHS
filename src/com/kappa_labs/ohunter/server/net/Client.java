@@ -53,7 +53,7 @@ public class Client {
 //                request = new RegisterRequest("locNick", "locPasswd");
                 request = new SearchRequest(
                         p, 50.0647411, 14.4196972, 20000, Photo.DAYTIME.DAY, 320, 200);
-//                request = new UpdatePlayerRequest(p) {};
+//                request = new UpdatePlayerRequest(p);
                 oos.writeObject(request);
                 oos.flush();
                 System.out.println("Data OK odeslana");
@@ -70,10 +70,10 @@ public class Client {
                 try {
                     Response resp = (Response) obj;
                     if (resp.places != null) {
-                        System.out.println("mam "+resp.places.size()+" mist");
-                        resp.places.stream().forEach((pl) -> {
-                            System.out.println(pl);
-                        });
+                        System.out.println("mam "+resp.places.length+" mist");
+                        for (Place place : resp.places) {
+                            System.out.println(place);
+                        }
                     }
                     if (resp.player != null) {
                         System.out.println("mam hrace: "+resp.player);

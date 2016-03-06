@@ -256,9 +256,17 @@ public class PlacesGetter {
             URL url = new URL(sb.toString());
             conn = (HttpURLConnection) url.openConnection();
 //            System.out.println("photo url = "+sb.toString());
-            photo.image = new SImage();
-            ((SImage)photo.image).setImage(ImageIO.read(url));
-            if (photo.image == null) {
+            photo.sImage = new SImage();
+            try {
+                ((SImage)photo.sImage).setImage(ImageIO.read(url));
+            } catch (NullPointerException ex) {
+                /* Rare exception - Java bug https://bugs.openjdk.java.net/browse/JDK-8058973 */
+                Logger.getLogger(PlacesGetter.class.getName()).log(Level.WARNING,
+                        "Error while getting the Photo", ex);
+                photo.sImage = null;
+                return null;
+            }
+            if (photo.sImage == null) {
                 return null;
             }
         } catch (MalformedURLException ex) {

@@ -10,8 +10,8 @@ import com.kappa_labs.ohunter.server.database.DatabaseService;
 
 public class ChangePasswordRequest extends com.kappa_labs.ohunter.lib.requests.ChangePasswordRequest {
 
-    public ChangePasswordRequest(Player player, String oldPassword, String password) {
-        super(player, oldPassword, password);
+    public ChangePasswordRequest(Player player, String oldPassword, String newPassword) {
+        super(player, oldPassword, newPassword);
     }
     
     public ChangePasswordRequest(Request r) {
@@ -21,7 +21,7 @@ public class ChangePasswordRequest extends com.kappa_labs.ohunter.lib.requests.C
     @Override
     public Response execute() throws OHException {
         DatabaseService ds = new DatabaseService();
-        ds.changePassword(player, oldPassword, password);
+        ds.changePassword(player, oldPassword, newPassword);
         Response response = new Response(player);
         
         return response;

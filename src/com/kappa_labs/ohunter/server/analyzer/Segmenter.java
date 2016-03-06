@@ -7,12 +7,10 @@ import com.kappa_labs.ohunter.server.entities.MyImage;
 import com.kappa_labs.ohunter.server.entities.Pixel;
 import com.kappa_labs.ohunter.server.entities.SImage;
 import com.kappa_labs.ohunter.server.entities.Segment;
-import com.kappa_labs.ohunter.server.utils.CIELab;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Random;
 import javax.imageio.ImageIO;
 
@@ -50,18 +48,18 @@ public class Segmenter {
      *      segment, that was found.
      */
     public static Segment[] segment(Photo photo) {
-        /* Save the image before segmentation into local file */
+        /* DEBUG: Save the image before segmentation into local file */
         try {
-            ImageIO.write(((SImage)photo.image).toBufferedImage(), "jpg", new File("nonsegmented-" + photo.toString() + (a) + ".jpg"));
-        } catch (IOException ex) {
-//            Logger.getLogger(Segmenter.class.getName()).log(Level.WARNING, null, ex);
-        }
+            File nsDir = new File("results/_nonsegmented/");
+            nsDir.mkdirs();
+            ImageIO.write(((SImage)photo.sImage).toBufferedImage(), "jpg", new File(nsDir + "/" + photo.toString() + (a) + ".jpg"));
+        } catch (IOException ex) { }
         
         /* Convert image to custom representation in HSV model */
         Pixel[][] hsvs = new Pixel[photo.getWidth()][photo.getHeight()];
         for (int i = 0; i < photo.getWidth(); i++) {
             for (int j = 0; j < photo.getHeight(); j++) {
-                Color col = new Color(((SImage)photo.image).toBufferedImage().getRGB(i, j));
+                Color col = new Color(((SImage)photo.sImage).toBufferedImage().getRGB(i, j));
                 float[] cils = new float[3];
                 Color.RGBtoHSB(col.getRed(), col.getGreen(), col.getBlue(), cils);
                 hsvs[i][j] = new Pixel(cils, i, j);
@@ -70,7 +68,7 @@ public class Segmenter {
         MyImage mi = new MyImage(hsvs, photo.getWidth(), photo.getHeight());
         Pixel[] means = kmeans(mi);
         
-        /* NOTE: debug only - shows kmeans output segments */
+        /* DEBUG: shows kmeans output segments */
         BufferedImage nbi = new BufferedImage(photo.getWidth(), photo.getHeight(), BufferedImage.TYPE_INT_RGB);
         for (int i = 0; i < mi.width; i++) {
             for (int j = 0; j < mi.height; j++) {
@@ -89,20 +87,20 @@ public class Segmenter {
                 nbi.setRGB(px.x, px.y, 0xFFFF0000);
             }
         }
-        /* Save the segmented image into local file */
+        /* DEBUG: Save the segmented image into local file */
         try {
-            ImageIO.write(nbi, "jpg", new File("segmented-" + photo.toString() + (a++) + ".jpg"));
-        } catch (IOException ex) {
-//            Logger.getLogger(Segmenter.class.getName()).log(Level.WARNING, null, ex);
-        }
+            File sDir = new File("results/_segmented/");
+            sDir.mkdirs();
+            ImageIO.write(nbi, "jpg", new File(sDir + "/" + photo.toString() + (a++) + ".jpg"));
+        } catch (IOException ex) { }
         /* Save it into a field in the Photo object */
-        photo._image = new SImage(nbi);
+        photo._sImage = new SImage(nbi);
         
         Segment[] segs = Segment.makeSegments(mi, means);
         
         return segs;
     }
-    // TODO: debug only
+    // DEBUG: debug only - odstranit
     static int a = 1;
     
     /**

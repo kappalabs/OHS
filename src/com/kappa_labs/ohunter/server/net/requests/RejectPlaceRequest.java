@@ -10,8 +10,8 @@ import com.kappa_labs.ohunter.server.database.DatabaseService;
 
 public class RejectPlaceRequest extends com.kappa_labs.ohunter.lib.requests.RejectPlaceRequest {
 
-    public RejectPlaceRequest(Player player, String placeKey) {
-        super(player, placeKey);
+    public RejectPlaceRequest(Player player, String placeID) {
+        super(player, placeID);
     }
     
     public RejectPlaceRequest(Request r) {
@@ -21,7 +21,7 @@ public class RejectPlaceRequest extends com.kappa_labs.ohunter.lib.requests.Reje
     @Override
     public Response execute() throws OHException {
         DatabaseService ds = new DatabaseService();
-        ds.rejectPlace(player, placeKey);
+        ds.rejectPlace(player, placeID);
         Response response = new Response(player);
         
         return response;

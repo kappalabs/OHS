@@ -2,6 +2,7 @@
 package com.kappa_labs.ohunter.server.analyzer;
 
 import com.kappa_labs.ohunter.lib.entities.Photo;
+import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.server.entities.SImage;
 import com.kappa_labs.ohunter.server.entities.DistrPair;
 import com.kappa_labs.ohunter.server.entities.Problem;
@@ -12,10 +13,7 @@ import com.kappa_labs.ohunter.server.utils.CIELab;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.util.Locale;
 import java.util.Random;
-import javax.imageio.ImageIO;
 
 /**
  * Class providing a method for measuring the similarity of two given images.
@@ -38,21 +36,20 @@ public class Analyzer {
      * @param ph1 First photo.
      * @param ph2 Second photo.
      * @return Similarity of given photos from interval [0;1];
+     * @throws com.kappa_labs.ohunter.lib.net.OHException When Photos are wrongly set.
      */
-    public static float computeSimilarity(Photo ph1, Photo ph2) {
+    public static float computeSimilarity(Photo ph1, Photo ph2) throws OHException {
         float ret = 0;
         
         /* Scale the images to provide the best results */
         try {
-            ph1.image = ph1._image = new SImage(ph1.image);
-            ph2.image = ph2._image = new SImage(ph2.image);
-            ((SImage)ph1.image).setImage(resize(((SImage)ph1._image).toBufferedImage()));
-            ((SImage)ph2.image).setImage(resize(((SImage)ph2._image).toBufferedImage()));
+            ph1.sImage = ph1._sImage = new SImage(ph1.sImage);
+            ph2.sImage = ph2._sImage = new SImage(ph2.sImage);
+            ((SImage)ph1.sImage).setImage(resize(((SImage)ph1._sImage).toBufferedImage()));
+            ((SImage)ph2.sImage).setImage(resize(((SImage)ph2._sImage).toBufferedImage()));
         } catch(Exception e) {
             System.err.println("Could not acquire photos from client: "+e);
-            e.printStackTrace();
-            //TODO: lepsi throw nejaka OHException
-            return 0;
+            throw new OHException("Could not acquire photos!", OHException.EXType.OTHER);
         }
         
         /* Count average from few attempts */
@@ -73,7 +70,9 @@ public class Analyzer {
 
             /* Solve the EMP linear problem and return the final result */
             EMDSolver empm = new EMDSolver(problem);
-            ret += Math.max(0f, Math.min(1f, (float) empm.countValue()));
+            float act = Math.max(0f, Math.min(1f, (float) empm.countValue()));
+            System.out.println(String.format(" - similarity: %.1f%%", 100 - act * 100));
+            ret += act;
         }
         ret /= poc;
         
@@ -176,7 +175,7 @@ public class Analyzer {
      * @return True if the given photo contains night picture, false otherwise.
      */
     public static boolean isNight(Photo photo) {   
-        BufferedImage img = ((SImage) photo.image).toBufferedImage();
+        BufferedImage img = ((SImage) photo.sImage).toBufferedImage();
         Random rand = new Random();
         int x, y, souc = 0;
         for (int i = 0; i < DEFAULT_NUM_SAMPLES; i++) {

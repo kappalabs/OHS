@@ -31,7 +31,7 @@ public class SImage extends com.kappa_labs.ohunter.lib.entities.SImage {
      * @param bimage BufferedImage to be converted to new SImage.
      */
     public SImage(BufferedImage bimage) {
-        this.image = toBytes(bimage);
+        this.bytes = toBytes(bimage);
         this.width = bimage.getWidth();
         this.height = bimage.getHeight();
     }
@@ -42,7 +42,7 @@ public class SImage extends com.kappa_labs.ohunter.lib.entities.SImage {
      * @param simage The library version of SImage.
      */
     public SImage(com.kappa_labs.ohunter.lib.entities.SImage simage) {
-        super(simage.image, simage.getWidth(), simage.getHeight());
+        super(simage);
     }
     
     /**
@@ -69,8 +69,8 @@ public class SImage extends com.kappa_labs.ohunter.lib.entities.SImage {
      * @return The BufferedImage converted from internal image data.
      */
     public BufferedImage toBufferedImage() {
-        if (invalidated || (_image == null && image != null)) {
-            ByteArrayInputStream bais = new ByteArrayInputStream(image);
+        if (invalidated || (_image == null && bytes != null)) {
+            ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
             try {
                 _image = ImageIO.read(bais);
                 invalidated = false;
@@ -103,7 +103,7 @@ public class SImage extends com.kappa_labs.ohunter.lib.entities.SImage {
      * @param bimage The BufferedImage image, which will be inserted.
      */
     public void setImage(BufferedImage bimage) {
-        this.image = toBytes(bimage);
+        this.bytes = toBytes(bimage);
         this.width = bimage.getWidth();
         this.height = bimage.getHeight();
         

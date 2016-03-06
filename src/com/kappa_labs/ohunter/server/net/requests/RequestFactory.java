@@ -29,8 +29,14 @@ public class RequestFactory {
         if (rpkg instanceof com.kappa_labs.ohunter.lib.requests.CompletePlaceRequest) {
             return new CompletePlaceRequest(rpkg);
         }
+        if (rpkg instanceof com.kappa_labs.ohunter.lib.requests.FillPlacesRequest) {
+            return new FillPlacesRequest(rpkg);
+        }
         if (rpkg instanceof com.kappa_labs.ohunter.lib.requests.LoginRequest) {
             return new LoginRequest(rpkg);
+        }
+        if (rpkg instanceof com.kappa_labs.ohunter.lib.requests.RadarSearchRequest) {
+            return new RadarSearchRequest(rpkg);
         }
         if (rpkg instanceof com.kappa_labs.ohunter.lib.requests.RegisterRequest) {
             return new RegisterRequest(rpkg);
@@ -61,4 +67,5 @@ public class RequestFactory {
         }
         return new Request() {};
     }
+    
 }

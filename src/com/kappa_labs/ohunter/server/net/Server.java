@@ -19,11 +19,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.InputMismatchException;
-import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -41,6 +39,8 @@ public class Server {
     
     private String address;
     private int port;
+    
+    private final boolean debugCache = false;
     
     
     /**
@@ -261,13 +261,13 @@ public class Server {
         public void run() {
             try {
                 System.out.println("Request prijmut k provedeni");
-                Response response = null;
-//                if (mRequest instanceof SearchRequest) {
-//                    ObjectInputStream ois = new ObjectInputStream(new FileInputStream(Client.objFile));
-//                    response = (Response) ois.readObject();
-//                } else {
+                Response response;
+                if (debugCache && mRequest instanceof SearchRequest) {
+                    ObjectInputStream ois = new ObjectInputStream(new FileInputStream(Client.objFile));
+                    response = (Response) ois.readObject();
+                } else {
                     response = mRequest.execute();
-//                }
+                }
                 System.out.println("request spocitan, odesilam...");
                 mOutput.writeObject(response);
                 System.out.println("respond odeslan, klient obslouzen ---------------");
@@ -283,8 +283,8 @@ public class Server {
                 }
             } catch (IOException ex) {
                 Logger.getLogger(Server.class.getName()).log(Level.WARNING, null, ex);
-//            } catch (ClassNotFoundException ex) {
-//                Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (ClassNotFoundException ex) {
+                Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
             } finally {
                 try {
                     mOutput.close();
