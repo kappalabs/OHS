@@ -4,7 +4,6 @@ package com.kappa_labs.ohunter.server.google_api;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.server.entities.SImage;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
@@ -105,7 +104,7 @@ public class PlacesGetter {
             resultList = new ArrayList<>(array.size());
             for (Object element : array) {
                 Place place = new Place();
-                place.gfields.put("place_id", (String) ((JSONObject) element).get("place_id"));
+                place.setID((String) ((JSONObject) element).get("place_id"));
                 JSONObject location = (JSONObject)
                         ((JSONObject) ((JSONObject) element).get("geometry")).get("location");
                 place.latitude = (Double) location.get("lat");
@@ -176,6 +175,12 @@ public class PlacesGetter {
                 return null;
             }
             
+            /* Add basic information about the location if necessary */
+            if (place.latitude == 0 && place.longitude == 0) {
+                JSONObject location = (JSONObject) ((JSONObject) result.get("geometry")).get("location");
+                place.latitude = (Double) location.get("lat");
+                place.longitude = (Double) location.get("lng");
+            }
             /* Add aditional information about the place */
             place.gfields.put("name", name);
             place.gfields.put("formatted_address", (String) ((JSONObject) result).get("formatted_address"));

@@ -17,7 +17,7 @@ import java.util.logging.Logger;
  */
 public class Database {
 
-    private static final Database database;
+    private static final Database DATABASE;
 
     private static final String DRIVER = "org.apache.derby.jdbc.EmbeddedDriver";
 
@@ -41,7 +41,7 @@ public class Database {
     private Connection connection;
 
     static {
-        database = new Database();
+        DATABASE = new Database();
 
         setDBSystemDir();
         try {
@@ -65,13 +65,14 @@ public class Database {
 
     private void tryInitConnection() {
         if (connection == null) {
-            System.out.println("Initializing database connection...");
+            System.out.print("Initializing database connection...");
 
             try {
                 connection = DriverManager.getConnection(URL, USER, PASSWORD);
             } catch (SQLException ex) {
                 Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, ex);
             }
+            System.out.println("... OK");
 
             createUnavailableTables(connection);
         }
@@ -567,7 +568,7 @@ public class Database {
     }
 
     public static Database getInstance() {
-        return database;
+        return DATABASE;
     }
 
 }

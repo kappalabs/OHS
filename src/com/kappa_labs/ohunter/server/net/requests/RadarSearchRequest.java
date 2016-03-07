@@ -26,8 +26,7 @@ public class RadarSearchRequest extends com.kappa_labs.ohunter.lib.requests.Rada
     public Response execute() throws OHException {
         System.out.println("RadarSearchRequest on [" + lat + "; " + lng + "]; radius = " + radius);
         /* Retrieve all possible places */
-        ArrayList<Place> places;
-        places = PlacesGetter.radarSearch(lat, lng, radius, "", TYPES);
+        ArrayList<Place> places = PlacesGetter.radarSearch(lat, lng, radius, "", TYPES);
         
         DatabaseService ds = new DatabaseService();
         /* Turn them to Photo objects, filter blocked and rejected */
@@ -37,7 +36,7 @@ public class RadarSearchRequest extends com.kappa_labs.ohunter.lib.requests.Rada
                         && !ds.isBlocked(place.getID())
                         && !ds.isRejected(player, place.getID());
             } catch (OHException ex) {
-//                    throw new OHException(keyWord); //NOTE: nelze z lambdy, nutno pres RuntimeEx
+                /* NOTE: Cannot throw OHException from lambda */
                 throw new RuntimeException(ex);
             }
         }).collect(Collectors.toCollection(ArrayList::new));
@@ -46,7 +45,7 @@ public class RadarSearchRequest extends com.kappa_labs.ohunter.lib.requests.Rada
         Response response = new Response(uid);
         response.places = places.toArray(new Place[0]);
         
-        System.out.println("RadarSearchRequest: I've prepared " + places.size() + " Places.");
+        System.out.println("RadarSearchRequest: prepared " + places.size() + " Places.");
         
         return response;
     }

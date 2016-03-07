@@ -21,7 +21,7 @@ public class FillPlacesRequest extends com.kappa_labs.ohunter.lib.requests.FillP
     /**
      * Number of threads allowed for PlaceWorkers thread pool.
      */
-    private static final int NUM_THREADS = 128;
+    private static final int NUM_THREADS = 256;
 
     
     public FillPlacesRequest(Player player, String[] placeIDs, Photo.DAYTIME daytime, int width, int height) {
@@ -34,31 +34,24 @@ public class FillPlacesRequest extends com.kappa_labs.ohunter.lib.requests.FillP
 
     @Override
     public Response execute() throws OHException {
-        ArrayList<Place> all_places = new ArrayList<>();
-        for (String placeID : placeIDs) {
-            Place place = new Place();
-            place.gfields.put("place_id", placeID);
-            all_places.add(place);
-        }
-        
         /* Parallel download of the Place Details and Photos */
-        ArrayList<Place> places = new ArrayList<>();
+        ArrayList<Place> filledPlaces = new ArrayList<>();
         ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS);
-        all_places.stream().forEach((place) -> {
-            executor.execute(new PlaceFiller(place, places, width, height));
-        });
+        for (Place place : places) {
+            executor.execute(new PlaceFiller(place, filledPlaces, width, height));
+        }
         executor.shutdown();
         try {
             executor.awaitTermination(1, TimeUnit.MINUTES);
         } catch (InterruptedException ex) {
-            Logger.getLogger(SearchRequest.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(SearchRequest.class.getName()).log(Level.WARNING, null, ex);
         }
         
         /* Store the data in Response object */
         Response response = new Response(uid);
-        response.places = places.toArray(new Place[0]);
+        response.places = filledPlaces.toArray(new Place[0]);
         
-        System.out.println("SearchRequest: I've prepared " + places.size() + " Places.");
+        System.out.println("FillPlacesRequest: prepared " + filledPlaces.size() + " Places.");
          
         return response;
     }

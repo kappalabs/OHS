@@ -25,7 +25,7 @@ public class SearchRequest extends com.kappa_labs.ohunter.lib.requests.SearchReq
     /**
      * Number of threads allowed for PlaceWorkers thread pool.
      */
-    private static final int NUM_THREADS = 128;
+    private static final int NUM_THREADS = 256;
     /**
      * Maximum number of places that will be send to the client.
      */
@@ -85,7 +85,7 @@ public class SearchRequest extends com.kappa_labs.ohunter.lib.requests.SearchReq
         Response response = new Response(uid);
         response.places = places.toArray(new Place[0]);
         
-        System.out.println("SearchRequest: I've prepared " + places.size() + " Places.");
+        System.out.println("SearchRequest: prepared " + places.size() + " Places.");
          
         return response;
     }

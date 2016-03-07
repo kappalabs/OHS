@@ -69,7 +69,7 @@ public class Server {
                 try {
                     ObjectInputStream ois = new ObjectInputStream(client.getInputStream());
                     ObjectOutputStream oos = new ObjectOutputStream(client.getOutputStream());
-                    System.out.println("Mam noveho klienta");
+                    System.out.println("\nMam noveho klienta");
                     Request request = null;
                     try {
                         request = (Request) ois.readObject();
@@ -269,15 +269,20 @@ public class Server {
                     response = mRequest.execute();
                 }
                 System.out.println("request spocitan, odesilam...");
+                if (response != null) {
+                    System.out.println("Response info: " + response);
+                    System.out.println("Vyrizovani trvalo cca "
+                            + String.format("%.2fs", (response.getTime() - mRequest.getTime()) / 1000.0));
+                }
                 mOutput.writeObject(response);
-                System.out.println("respond odeslan, klient obslouzen ---------------");
+                System.out.println("response odeslan, klient obslouzen");
             } catch (OHException ex) {
                 try {
 //                    Logger.getLogger(Server.class.getName()).log(Level.WARNING, null, ex);
                     System.err.println(ex);
                     System.out.println("Vypadla vyjimka!! odeslu ji...");
                     mOutput.writeObject(ex);
-                    System.out.println("Odeslano, klient obslouzen -----------------");
+                    System.out.println("Odeslano, klient obslouzen");
                 } catch (IOException ex1) {
                     Logger.getLogger(Server.class.getName()).log(Level.WARNING, null, ex1);
                 }
@@ -286,6 +291,7 @@ public class Server {
             } catch (ClassNotFoundException ex) {
                 Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
             } finally {
+                System.out.println("---------------------------");
                 try {
                     mOutput.close();
                     mClient.close();
