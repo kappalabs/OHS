@@ -35,7 +35,7 @@ import java.util.logging.Logger;
 public class Server {
 
     public static final int PORT = 4242;
-    public static final int NUM_THREADS = 4;
+    public static final int NUM_THREADS = 8;
     
     private String address;
     private int port;

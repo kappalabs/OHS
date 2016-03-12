@@ -5,7 +5,13 @@ import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.server.analyzer.Analyzer;
 import com.kappa_labs.ohunter.server.google_api.PlacesGetter;
+import com.kappa_labs.ohunter.server.net.requests.SearchRequest;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 /**
@@ -13,9 +19,15 @@ import java.util.ArrayList;
  */
 public class PlaceFiller implements Runnable {
 
+    /**
+     * Number of minutes to wait for thread termination.
+     */
+    private final int MAX_WAIT_TIME = 1;
+    
     private final Place mPlace;
     private final ArrayList<Place> mPlaces;
     private final int width, height;
+    private final int maxThreads;
 
 
     /**
@@ -27,12 +39,14 @@ public class PlaceFiller implements Runnable {
      * @param places The List, where the valid result should be placed.
      * @param width The maximum width of photos for given place.
      * @param height The maximum height of photos for given place.
+     * @param maxThreads The maximum number of threads to retrieve photos for each place.
      */
-    public PlaceFiller(Place place, ArrayList<Place> places, int width, int height) {
+    public PlaceFiller(Place place, ArrayList<Place> places, int width, int height, int maxThreads) {
         this.mPlace = place;
         this.mPlaces = places;
         this.width = width;
         this.height = height;
+        this.maxThreads = maxThreads;
     }
 
     @Override
@@ -41,15 +55,45 @@ public class PlaceFiller implements Runnable {
         if (photos == null) {
             return;
         }
-        mPlace.photos = photos;
+        mPlace.addPhotos(photos);
+        
+        /* Retrieve these photos */
+        ExecutorService executor = Executors.newFixedThreadPool(maxThreads);        
         photos.stream().forEach((photo) -> {
-            PlacesGetter.photoRequest(photo, width, height);
+            executor.execute(new PhotosFiller(photo, width, height));
+        });
+        executor.shutdown();
+        try {
+            executor.awaitTermination(MAX_WAIT_TIME, TimeUnit.MINUTES);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(SearchRequest.class.getName()).log(Level.WARNING, null, ex);
+        }
+        
+        mPlaces.add(mPlace);
+    }
+    
+    /**
+     * Worker class to retrieve one photo.
+     */
+    private class PhotosFiller implements Runnable {
+        
+        private Photo photo;
+        private final int width, height;
+
+        public PhotosFiller(Photo photo, int width, int height) {
+            this.photo = photo;
+            this.width = width;
+            this.height = height;
+        }
+
+        @Override
+        public void run() {
+            photo = PlacesGetter.photoRequest(photo, width, height);
             if (Analyzer.isNight(photo)) {
                 photo.daytime = Photo.DAYTIME.NIGHT;
             }
-        });
-
-        mPlaces.add(mPlace);
+        }
+    
     }
 
 }

@@ -182,11 +182,11 @@ public class PlacesGetter {
                 place.longitude = (Double) location.get("lng");
             }
             /* Add aditional information about the place */
-            place.gfields.put("name", name);
-            place.gfields.put("formatted_address", (String) ((JSONObject) result).get("formatted_address"));
-            place.gfields.put("url", (String) ((JSONObject) result).get("url"));
-            place.gfields.put("website", (String) ((JSONObject) result).get("website"));
-            place.gfields.put("icon", (String) ((JSONObject) result).get("icon"));
+            place.putGField("name", name);
+            place.putGField("formatted_address", (String) ((JSONObject) result).get("formatted_address"));
+            place.putGField("url", (String) ((JSONObject) result).get("url"));
+            place.putGField("website", (String) ((JSONObject) result).get("website"));
+            place.putGField("icon", (String) ((JSONObject) result).get("icon"));
 
             /* Extract the photo references for this place from the results */
             JSONArray photos = (JSONArray) result.get("photos");
@@ -247,7 +247,6 @@ public class PlacesGetter {
      * @return The same Photo object with associated image.
      */
     public static Photo photoRequest(Photo photo, int maxWidth, int maxHeight) {
-        ArrayList<Photo> photoList = null;
         HttpURLConnection conn = null;
         
         try {
@@ -260,7 +259,6 @@ public class PlacesGetter {
 
             URL url = new URL(sb.toString());
             conn = (HttpURLConnection) url.openConnection();
-//            System.out.println("photo url = "+sb.toString());
             photo.sImage = new SImage();
             try {
                 ((SImage)photo.sImage).setImage(ImageIO.read(url));

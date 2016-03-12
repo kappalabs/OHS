@@ -17,11 +17,19 @@ import java.util.logging.Logger;
 
 
 public class FillPlacesRequest extends com.kappa_labs.ohunter.lib.requests.FillPlacesRequest {
-
+    
     /**
-     * Number of threads allowed for PlaceWorkers thread pool.
+     * Number of minutes to wait for thread termination.
      */
-    private static final int NUM_THREADS = 256;
+    private final int MAX_WAIT_TIME = 1;
+    /**
+     * Number of threads allowed for PlaceFiller thread pool.
+     */
+    private static final int NUM_FILLER_THREADS = 256;
+    /**
+     * Number of threads allowed to retrieve photos for each place.
+     */
+    private static final int NUM_PHOTO_THREADS = 10;
 
     
     public FillPlacesRequest(Player player, String[] placeIDs, Photo.DAYTIME daytime, int width, int height) {
@@ -36,13 +44,13 @@ public class FillPlacesRequest extends com.kappa_labs.ohunter.lib.requests.FillP
     public Response execute() throws OHException {
         /* Parallel download of the Place Details and Photos */
         ArrayList<Place> filledPlaces = new ArrayList<>();
-        ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS);
+        ExecutorService executor = Executors.newFixedThreadPool(NUM_FILLER_THREADS);
         for (Place place : places) {
-            executor.execute(new PlaceFiller(place, filledPlaces, width, height));
+            executor.execute(new PlaceFiller(place, filledPlaces, width, height, NUM_PHOTO_THREADS));
         }
         executor.shutdown();
         try {
-            executor.awaitTermination(1, TimeUnit.MINUTES);
+            executor.awaitTermination(MAX_WAIT_TIME, TimeUnit.MINUTES);
         } catch (InterruptedException ex) {
             Logger.getLogger(SearchRequest.class.getName()).log(Level.WARNING, null, ex);
         }

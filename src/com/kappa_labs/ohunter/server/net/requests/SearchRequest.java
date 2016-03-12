@@ -23,9 +23,17 @@ import java.util.logging.Logger;
 public class SearchRequest extends com.kappa_labs.ohunter.lib.requests.SearchRequest {
     
     /**
-     * Number of threads allowed for PlaceWorkers thread pool.
+     * Number of minutes to wait for thread termination.
      */
-    private static final int NUM_THREADS = 256;
+    private final int MAX_WAIT_TIME = 1;
+    /**
+     * Number of threads allowed for PlaceFiller thread pool.
+     */
+    private static final int NUM_FILLER_THREADS = 256;
+    /**
+     * Number of threads allowed to retrieve photos for each place.
+     */
+    private static final int NUM_PHOTO_THREADS = 10;
     /**
      * Maximum number of places that will be send to the client.
      */
@@ -70,13 +78,13 @@ public class SearchRequest extends com.kappa_labs.ohunter.lib.requests.SearchReq
         
         /* Parallel download of the Place Details and Photos */
         ArrayList<Place> places = new ArrayList<>();
-        ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS);
+        ExecutorService executor = Executors.newFixedThreadPool(NUM_FILLER_THREADS);
         for (Place place : all_places) {
-            executor.execute(new PlaceFiller(place, places, width, height));
+            executor.execute(new PlaceFiller(place, places, width, height, NUM_PHOTO_THREADS));
         }
         executor.shutdown();
         try {
-            executor.awaitTermination(1, TimeUnit.MINUTES);
+            executor.awaitTermination(MAX_WAIT_TIME, TimeUnit.MINUTES);
         } catch (InterruptedException ex) {
             Logger.getLogger(SearchRequest.class.getName()).log(Level.SEVERE, null, ex);
         }
