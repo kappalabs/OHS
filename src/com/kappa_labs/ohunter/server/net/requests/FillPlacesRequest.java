@@ -9,6 +9,7 @@ import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.Request;
 import com.kappa_labs.ohunter.server.utils.PlaceFiller;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -43,7 +44,7 @@ public class FillPlacesRequest extends com.kappa_labs.ohunter.lib.requests.FillP
     @Override
     public Response execute() throws OHException {
         /* Parallel download of the Place Details and Photos */
-        ArrayList<Place> filledPlaces = new ArrayList<>();
+        List<Place> filledPlaces = new ArrayList<>();
         ExecutorService executor = Executors.newFixedThreadPool(NUM_FILLER_THREADS);
         for (Place place : places) {
             executor.execute(new PlaceFiller(place, filledPlaces, width, height, NUM_PHOTO_THREADS));

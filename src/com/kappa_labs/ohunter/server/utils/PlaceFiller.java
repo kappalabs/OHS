@@ -6,7 +6,7 @@ import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.server.analyzer.Analyzer;
 import com.kappa_labs.ohunter.server.google_api.PlacesGetter;
 import com.kappa_labs.ohunter.server.net.requests.SearchRequest;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -25,7 +25,7 @@ public class PlaceFiller implements Runnable {
     private final int MAX_WAIT_TIME = 1;
     
     private final Place mPlace;
-    private final ArrayList<Place> mPlaces;
+    private final List<Place> mPlaces;
     private final int width, height;
     private final int maxThreads;
 
@@ -41,7 +41,7 @@ public class PlaceFiller implements Runnable {
      * @param height The maximum height of photos for given place.
      * @param maxThreads The maximum number of threads to retrieve photos for each place.
      */
-    public PlaceFiller(Place place, ArrayList<Place> places, int width, int height, int maxThreads) {
+    public PlaceFiller(Place place, List<Place> places, int width, int height, int maxThreads) {
         this.mPlace = place;
         this.mPlaces = places;
         this.width = width;
@@ -51,7 +51,7 @@ public class PlaceFiller implements Runnable {
 
     @Override
     public void run() {
-        ArrayList<Photo> photos = PlacesGetter.details(mPlace);
+        List<Photo> photos = PlacesGetter.details(mPlace);
         if (photos == null) {
             return;
         }

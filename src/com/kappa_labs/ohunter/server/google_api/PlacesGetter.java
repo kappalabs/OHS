@@ -12,6 +12,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
@@ -41,8 +42,7 @@ public class PlacesGetter {
 
     
     /**
-     * Performs request on Google API Radar Search. Returns up to 200 result places
-     * in ArrayList.
+     * Performs request on Google API Radar Search. Returns up to 200 result places in List.
      * 
      * @param keyword Optional, can specify the places exactly (by their name).
      * @param latitude Latitude of the location.
@@ -51,9 +51,8 @@ public class PlacesGetter {
      * @param types Types of objects as GAPI specifies.
      * @return List of all places, that were returned by the request.
      */
-    public static ArrayList<Place> radarSearch(double latitude, double longitude,
-            int radius, String keyword, String types) {
-        ArrayList<Place> resultList = null;
+    public static List<Place> radarSearch(double latitude, double longitude, int radius, String keyword, String types) {
+        List<Place> resultList = null;
 
         HttpURLConnection conn = null;
         StringBuilder jsonResults = new StringBuilder();
@@ -122,14 +121,14 @@ public class PlacesGetter {
     /**
      * Performs request on Google API Place Details. Has acess to aditional information
      * about place, which is specified by place_id. References to photos of this
-     * place will be returned in ArrayList. Aditional details will be added
+     * place will be returned in List. Aditional details will be added
      * to the given Place object.
      * 
      * @param place Place object with place_id String, that was returned by Radar Search to specify a place.
-     * @return ArrayList of photos. They will contain only references, not the image itself yet.
+     * @return List of photos. They will contain only references, not the image itself yet.
      */
-    public static ArrayList<Photo> details(Place place) {
-        ArrayList<Photo> photoList = null;
+    public static List<Photo> details(Place place) {
+        List<Photo> photoList = null;
         HttpURLConnection conn = null;
         StringBuilder jsonResults = new StringBuilder();
         
@@ -294,8 +293,8 @@ public class PlacesGetter {
 //    private static final String TYPE_AUTOCOMPLETE = "/autocomplete";
 //    private static final String TYPE_SEARCH = "/search";
 //
-//    public static ArrayList<Place> autocomplete(String input) {
-//        ArrayList<Place> resultList = null;
+//    public static List<Place> autocomplete(String input) {
+//        List<Place> resultList = null;
 //
 //        HttpURLConnection conn = null;
 //        StringBuilder jsonResults = new StringBuilder();
@@ -348,8 +347,8 @@ public class PlacesGetter {
 //        return resultList;
 //    }
 //
-//    public static ArrayList<Place> search(String keyword, double latitude, double longitude, int radius) {
-//        ArrayList<Place> resultList = null;
+//    public static List<Place> search(String keyword, double latitude, double longitude, int radius) {
+//        List<Place> resultList = null;
 //
 //        HttpURLConnection conn = null;
 //        StringBuilder jsonResults = new StringBuilder();

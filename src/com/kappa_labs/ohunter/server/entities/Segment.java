@@ -2,6 +2,7 @@
 package com.kappa_labs.ohunter.server.entities;
 
 import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -118,7 +119,7 @@ public class Segment {
         }
         
         /* Remove invalid segments */
-        ArrayList<Segment> ss_ = new ArrayList<>();
+        List<Segment> ss_ = new ArrayList<>();
         for (Segment s : segms) {
             if (s != null) {
                 ss_.add(s);

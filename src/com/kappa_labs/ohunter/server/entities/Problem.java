@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import scpsolver.problems.LPWizard;
@@ -21,7 +22,7 @@ public class Problem {
     /**
      * The distributions, on which the EMP is being computed.
      */
-    public ArrayList<DistrPair> distr1, distr2;
+    public List<DistrPair> distr1, distr2;
     
     
     /**

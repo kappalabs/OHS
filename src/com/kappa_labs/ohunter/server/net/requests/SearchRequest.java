@@ -13,6 +13,7 @@ import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.Request;
 import static com.kappa_labs.ohunter.lib.requests.RadarSearchRequest.TYPES;
 import com.kappa_labs.ohunter.server.utils.PlaceFiller;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -53,7 +54,7 @@ public class SearchRequest extends com.kappa_labs.ohunter.lib.requests.SearchReq
     public Response execute() throws OHException {
         System.out.println("SearchRequest on [" + lat + "; " + lng + "]; radius = " + radius);
         /* Retrieve all possible places */
-        ArrayList<Place> all_places;
+        List<Place> all_places;
         all_places = PlacesGetter.radarSearch(lat, lng, radius, "", TYPES);
         
         /* Filter completed, blocked and rejected ones */
@@ -77,7 +78,7 @@ public class SearchRequest extends com.kappa_labs.ohunter.lib.requests.SearchReq
         }
         
         /* Parallel download of the Place Details and Photos */
-        ArrayList<Place> places = new ArrayList<>();
+        List<Place> places = new ArrayList<>();
         ExecutorService executor = Executors.newFixedThreadPool(NUM_FILLER_THREADS);
         for (Place place : all_places) {
             executor.execute(new PlaceFiller(place, places, width, height, NUM_PHOTO_THREADS));

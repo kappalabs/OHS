@@ -22,6 +22,7 @@ import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.InputMismatchException;
+import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -110,7 +111,7 @@ public class Server {
     private String findServerIP() {
         try {
             Enumeration<NetworkInterface> n = NetworkInterface.getNetworkInterfaces();
-            ArrayList<String> adds = new ArrayList<>();
+            List<String> adds = new ArrayList<>();
             adds.add("custom");
             for (; n.hasMoreElements();) {
                 NetworkInterface e = n.nextElement();

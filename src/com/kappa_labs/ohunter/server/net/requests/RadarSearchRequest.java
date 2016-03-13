@@ -9,6 +9,7 @@ import com.kappa_labs.ohunter.lib.requests.Request;
 import com.kappa_labs.ohunter.server.database.DatabaseService;
 import com.kappa_labs.ohunter.server.google_api.PlacesGetter;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 
@@ -26,7 +27,7 @@ public class RadarSearchRequest extends com.kappa_labs.ohunter.lib.requests.Rada
     public Response execute() throws OHException {
         System.out.println("RadarSearchRequest on [" + lat + "; " + lng + "]; radius = " + radius);
         /* Retrieve all possible places */
-        ArrayList<Place> places = PlacesGetter.radarSearch(lat, lng, radius, "", TYPES);
+        List<Place> places = PlacesGetter.radarSearch(lat, lng, radius, "", TYPES);
         
         DatabaseService ds = new DatabaseService();
         /* Turn them to Photo objects, filter blocked and rejected */
