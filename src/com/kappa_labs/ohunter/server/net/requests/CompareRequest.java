@@ -10,20 +10,26 @@ import com.kappa_labs.ohunter.server.analyzer.Analyzer;
 
 
 public class CompareRequest extends com.kappa_labs.ohunter.lib.requests.CompareRequest {
-
-    public CompareRequest(Player player, Photo photo1, Photo photo2) {
-        super(player, photo1, photo2);
-    }
     
+    public CompareRequest(Player player, Photo referencPhoto, Photo[] similarPhotos) {
+        super(player, referencPhoto, similarPhotos);
+    }
+
     public CompareRequest(Request r) {
         super((com.kappa_labs.ohunter.lib.requests.CompareRequest) r);
     }
     
     @Override
     public Response execute() throws OHException {
-        float similarity = Analyzer.computeSimilarity(photo1, photo2);
+        float bestSimilarity = 0;
+        for (Photo similarPhoto : similarPhotos) {
+            float similarity = Analyzer.computeSimilarity(referencePhoto, similarPhoto);
+            if (similarity > bestSimilarity) {
+                bestSimilarity = similarity;
+            }
+        }
         Response response = new Response(uid);
-        response.similarity = similarity;
+        response.similarity = bestSimilarity;
         
         return response;
     }
