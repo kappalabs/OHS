@@ -3,6 +3,7 @@ package com.kappa_labs.ohunter.server.database;
 
 import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.net.OHException;
+import java.sql.Timestamp;
 
 /**
  * Class providing operations in database.
@@ -181,11 +182,13 @@ public class DatabaseService {
      * Add new completed place to database for given player.
      * 
      * @param player Who completed the place.
-     * @param placeKey Place unique identifier.
+     * @param placeID Place unique identifier.
+     * @param photoReference Photo reference, from Google Places, of the image that was photographed.
+     * @param timestamp Timestamp of the time, when the place was completed.
      * @throws OHException When place cannot be add to database.
      */
-    public void completePlace(Player player, String placeKey) throws OHException {
-        if (!database.addCompleted(player.getUID(), placeKey)) {
+    public void completePlace(Player player, String placeID, String photoReference, Timestamp timestamp) throws OHException {
+        if (!database.addCompleted(player.getUID(), placeID, photoReference, timestamp)) {
             throw new OHException("Error while adding to completed!", OHException.EXType.DATABASE_ERROR);
         }
     }

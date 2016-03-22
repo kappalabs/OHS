@@ -10,8 +10,8 @@ import com.kappa_labs.ohunter.server.database.DatabaseService;
 
 public class CompletePlaceRequest extends com.kappa_labs.ohunter.lib.requests.CompletePlaceRequest {
 
-    public CompletePlaceRequest(Player player, String placeID) {
-        super(player, placeID);
+    public CompletePlaceRequest(Player player, String placeID, String photoReference) {
+        super(player, placeID, photoReference);
     }
     
     public CompletePlaceRequest(Request r) {
@@ -21,7 +21,7 @@ public class CompletePlaceRequest extends com.kappa_labs.ohunter.lib.requests.Co
     @Override
     public Response execute() throws OHException {
         DatabaseService ds = new DatabaseService();
-        ds.completePlace(player, placeID);
+        ds.completePlace(player, placeID, photoReference, timestamp);
         Response response = new Response(player);
         
         return response;

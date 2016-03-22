@@ -273,7 +273,7 @@ public class Server {
                 if (response != null) {
                     System.out.println("Response info: " + response);
                     System.out.println("Vyrizovani trvalo cca "
-                            + String.format("%.2fs", (response.getTime() - mRequest.getTime()) / 1000.0));
+                            + String.format("%.2fs", (response.getTimestamp().getTime() - mRequest.getTimestamp().getTime()) / 1000.0));
                 }
                 mOutput.writeObject(response);
                 System.out.println("response odeslan, klient obslouzen");

@@ -9,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -36,7 +37,8 @@ public class Database {
     private static final String TABLE_COLUMN_PLACE_ID = "ID_MISTA";
     private static final String TABLE_NAME_REJECTED = "ZAMITNUTE";
     private static final String TABLE_NAME_BLOCKED = "BLOKOVANE";
-//    private static final String TABLE_COLUMN_PHOTO_ID = "ID_FOTO";
+    private static final String TABLE_COLUMN_PHOTO_ID = "ID_FOTO";
+    private static final String TABLE_COLUMN_TIMESTAMP = "TIMESTAMP";
 
     private Connection connection;
 
@@ -129,7 +131,10 @@ public class Database {
         final String sqlCreateCompletedTable
                 = "CREATE TABLE " + TABLE_NAME_COMPLETED + " ( "
                 + TABLE_COLUMN_PLAYER_ID + " INTEGER NOT NULL,"
-                + TABLE_COLUMN_PLACE_ID + " VARCHAR(64) NOT NULL "
+                + TABLE_COLUMN_PLACE_ID + " VARCHAR(64) NOT NULL, "
+//                Google Places API unfortunately does not specify the maximum length of this value...
+                + TABLE_COLUMN_PHOTO_ID + " VARCHAR(512) NOT NULL, "
+                + TABLE_COLUMN_TIMESTAMP + " TIMESTAMP NOT NULL "
                 + ")";
         System.out.println("creating " + TABLE_NAME_COMPLETED + " table");
         return execCreateTable(connection, sqlCreateCompletedTable);
@@ -376,7 +381,7 @@ public class Database {
         return score;
     }
     
-    protected boolean addCompleted(int playerID, String placeID) {
+    protected boolean addCompleted(int playerID, String placeID, String photoReference, Timestamp timestamp) {
         /* Before doing anything, check (-> instantiate) the DB connector */
         tryInitConnection();
         
@@ -386,10 +391,15 @@ public class Database {
         try {
             stmtAddCompleted = connection.prepareStatement(
                     "INSERT INTO " + TABLE_NAME_COMPLETED + " "
-                    + "(" + TABLE_COLUMN_PLAYER_ID + "," + TABLE_COLUMN_PLACE_ID + ")"
-                    + "VALUES (?, ?)");
+                    + "(" + TABLE_COLUMN_PLAYER_ID + ","
+                            + TABLE_COLUMN_PLACE_ID + ","
+                            + TABLE_COLUMN_PHOTO_ID + ","
+                            + TABLE_COLUMN_TIMESTAMP + ")"
+                    + "VALUES (?, ?, ?, ?)");
             stmtAddCompleted.setInt(1, playerID);
             stmtAddCompleted.setString(2, placeID);
+            stmtAddCompleted.setString(3, photoReference);
+            stmtAddCompleted.setTimestamp(4, timestamp);
             stmtAddCompleted.executeUpdate();
             added = true;
         } catch (SQLException ex) {
