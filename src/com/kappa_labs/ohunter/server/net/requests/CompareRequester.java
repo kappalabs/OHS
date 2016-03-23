@@ -1,24 +1,22 @@
-
 package com.kappa_labs.ohunter.server.net.requests;
 
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
-import com.kappa_labs.ohunter.lib.requests.Request;
+import com.kappa_labs.ohunter.lib.requests.CompareRequest;
 import com.kappa_labs.ohunter.server.analyzer.Analyzer;
 
+public class CompareRequester extends com.kappa_labs.ohunter.lib.requests.CompareRequest {
 
-public class CompareRequest extends com.kappa_labs.ohunter.lib.requests.CompareRequest {
-    
-    public CompareRequest(Player player, Photo referencPhoto, Photo[] similarPhotos) {
+    public CompareRequester(Player player, Photo referencPhoto, Photo[] similarPhotos) {
         super(player, referencPhoto, similarPhotos);
     }
 
-    public CompareRequest(Request r) {
-        super((com.kappa_labs.ohunter.lib.requests.CompareRequest) r);
+    public CompareRequester(CompareRequest request) {
+        super(request);
     }
-    
+
     @Override
     public Response execute() throws OHException {
         float bestSimilarity = 0;
@@ -30,7 +28,7 @@ public class CompareRequest extends com.kappa_labs.ohunter.lib.requests.CompareR
         }
         Response response = new Response(uid);
         response.similarity = bestSimilarity;
-        
+
         return response;
     }
 

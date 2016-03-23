@@ -257,7 +257,7 @@ public class Database {
                         "UPDATE " + TABLE_NAME_PLAYER + " SET "
                         + TABLE_COLUMN_NICKNAME + " = ?,"
                         + TABLE_COLUMN_SCORE + " = ?,"
-                        + TABLE_COLUMN_PASSWORD + " = ?,"
+                        + TABLE_COLUMN_PASSWORD + " = ? "
                         + "WHERE " + TABLE_COLUMN_PLAYER_ID + " = ?");
                 stmtEditPlayer.setString(3, password);
                 stmtEditPlayer.setInt(4, id);
@@ -265,7 +265,7 @@ public class Database {
                 stmtEditPlayer = connection.prepareStatement(
                         "UPDATE " + TABLE_NAME_PLAYER + " SET "
                         + TABLE_COLUMN_NICKNAME + " = ?,"
-                        + TABLE_COLUMN_SCORE + " = ?,"
+                        + TABLE_COLUMN_SCORE + " = ? "
                         + "WHERE " + TABLE_COLUMN_PLAYER_ID + " = ?");
                 stmtEditPlayer.setInt(3, id);
             }

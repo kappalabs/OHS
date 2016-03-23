@@ -1,4 +1,3 @@
-
 package com.kappa_labs.ohunter.server.net.requests;
 
 import com.kappa_labs.ohunter.lib.entities.Photo;
@@ -6,7 +5,7 @@ import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
-import com.kappa_labs.ohunter.lib.requests.Request;
+import com.kappa_labs.ohunter.lib.requests.FillPlacesRequest;
 import com.kappa_labs.ohunter.server.utils.PlaceFiller;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,9 +15,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+public class FillPlacesRequester extends com.kappa_labs.ohunter.lib.requests.FillPlacesRequest {
 
-public class FillPlacesRequest extends com.kappa_labs.ohunter.lib.requests.FillPlacesRequest {
-    
     /**
      * Number of minutes to wait for thread termination.
      */
@@ -33,12 +31,12 @@ public class FillPlacesRequest extends com.kappa_labs.ohunter.lib.requests.FillP
     private static final int NUM_PHOTO_THREADS = 10;
 
     
-    public FillPlacesRequest(Player player, String[] placeIDs, Photo.DAYTIME daytime, int width, int height) {
+    public FillPlacesRequester(Player player, String[] placeIDs, Photo.DAYTIME daytime, int width, int height) {
         super(player, placeIDs, daytime, width, height);
     }
 
-    public FillPlacesRequest(Request request) {
-        super((com.kappa_labs.ohunter.lib.requests.FillPlacesRequest) request);
+    public FillPlacesRequester(FillPlacesRequest request) {
+        super(request);
     }
 
     @Override
@@ -53,15 +51,15 @@ public class FillPlacesRequest extends com.kappa_labs.ohunter.lib.requests.FillP
         try {
             executor.awaitTermination(MAX_WAIT_TIME, TimeUnit.MINUTES);
         } catch (InterruptedException ex) {
-            Logger.getLogger(SearchRequest.class.getName()).log(Level.WARNING, null, ex);
+            Logger.getLogger(SearchRequester.class.getName()).log(Level.WARNING, null, ex);
         }
-        
+
         /* Store the data in Response object */
         Response response = new Response(uid);
         response.places = filledPlaces.toArray(new Place[0]);
-        
+
         System.out.println("FillPlacesRequest: prepared " + filledPlaces.size() + " Places.");
-         
+
         return response;
     }
 

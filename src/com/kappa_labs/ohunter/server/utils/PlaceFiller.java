@@ -5,7 +5,7 @@ import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.server.analyzer.Analyzer;
 import com.kappa_labs.ohunter.server.google_api.PlacesGetter;
-import com.kappa_labs.ohunter.server.net.requests.SearchRequest;
+import com.kappa_labs.ohunter.server.net.requests.SearchRequester;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -66,7 +66,7 @@ public class PlaceFiller implements Runnable {
         try {
             executor.awaitTermination(MAX_WAIT_TIME, TimeUnit.MINUTES);
         } catch (InterruptedException ex) {
-            Logger.getLogger(SearchRequest.class.getName()).log(Level.WARNING, null, ex);
+            Logger.getLogger(SearchRequester.class.getName()).log(Level.WARNING, null, ex);
         }
         
         mPlaces.add(mPlace);

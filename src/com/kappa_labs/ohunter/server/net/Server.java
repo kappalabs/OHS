@@ -5,8 +5,8 @@ import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.requests.Request;
 import com.kappa_labs.ohunter.server.database.Database;
-import com.kappa_labs.ohunter.server.net.requests.RequestFactory;
-import com.kappa_labs.ohunter.server.net.requests.SearchRequest;
+import com.kappa_labs.ohunter.server.net.requests.RequesterFactory;
+import com.kappa_labs.ohunter.server.net.requests.SearchRequester;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InvalidClassException;
@@ -78,7 +78,7 @@ public class Server {
                     } catch (InvalidClassException icex) {
                         System.err.println("Serializace je inkompatibilni!");
                     }
-                    request = RequestFactory.buildRequest(request);
+                    request = RequesterFactory.buildRequester(request);
                     ClientWorker cw = new ClientWorker(request, oos, client);
                     executor.execute(cw);
                     System.out.println("Request odeslan executoru");
@@ -263,7 +263,7 @@ public class Server {
             try {
                 System.out.println("Request prijmut k provedeni");
                 Response response;
-                if (debugCache && mRequest instanceof SearchRequest) {
+                if (debugCache && mRequest instanceof SearchRequester) {
                     ObjectInputStream ois = new ObjectInputStream(new FileInputStream(Client.objFile));
                     response = (Response) ois.readObject();
                 } else {

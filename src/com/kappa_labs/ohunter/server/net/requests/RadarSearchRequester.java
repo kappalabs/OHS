@@ -1,34 +1,39 @@
-
 package com.kappa_labs.ohunter.server.net.requests;
 
 import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
-import com.kappa_labs.ohunter.lib.requests.Request;
+import com.kappa_labs.ohunter.lib.requests.RadarSearchRequest;
 import com.kappa_labs.ohunter.server.database.DatabaseService;
 import com.kappa_labs.ohunter.server.google_api.PlacesGetter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+public class RadarSearchRequester extends com.kappa_labs.ohunter.lib.requests.RadarSearchRequest {
 
-public class RadarSearchRequest extends com.kappa_labs.ohunter.lib.requests.RadarSearchRequest {
+    /**
+     * Types of objects, that will be returned as result photos, supported by
+     * Google Place API.
+     */
+    public static final String TYPES = "university|synagogue|city_hall|church|museum|mosque|";
 
-    public RadarSearchRequest(Player player, double lat, double lng, int radius) {
+    
+    public RadarSearchRequester(Player player, double lat, double lng, int radius) {
         super(player, lat, lng, radius);
     }
 
-    public RadarSearchRequest(Request request) {
-        super((com.kappa_labs.ohunter.lib.requests.RadarSearchRequest) request);
+    public RadarSearchRequester(RadarSearchRequest request) {
+        super(request);
     }
 
     @Override
     public Response execute() throws OHException {
-        System.out.println("RadarSearchRequest on [" + lat + "; " + lng + "]; radius = " + radius);
+        System.out.println("RadarSearchRequest on [" + latitude + "; " + longitude + "]; radius = " + radius);
         /* Retrieve all possible places */
-        List<Place> places = PlacesGetter.radarSearch(lat, lng, radius, "", TYPES);
-        
+        List<Place> places = PlacesGetter.radarSearch(latitude, longitude, radius, "", TYPES);
+
         DatabaseService ds = new DatabaseService();
         /* Turn them to Photo objects, filter blocked and rejected */
         places = places.stream().filter((Place place) -> {
@@ -41,13 +46,13 @@ public class RadarSearchRequest extends com.kappa_labs.ohunter.lib.requests.Rada
                 throw new RuntimeException(ex);
             }
         }).collect(Collectors.toCollection(ArrayList::new));
-        
+
         /* Store the data in Response object */
         Response response = new Response(uid);
         response.places = places.toArray(new Place[0]);
-        
+
         System.out.println("RadarSearchRequest: prepared " + places.size() + " Places.");
-        
+
         return response;
     }
 

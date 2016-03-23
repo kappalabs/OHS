@@ -11,9 +11,9 @@ import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.server.net.Client;
 import com.kappa_labs.ohunter.server.net.Server;
-import com.kappa_labs.ohunter.server.net.requests.LoginRequest;
-import com.kappa_labs.ohunter.server.net.requests.RegisterRequest;
-import com.kappa_labs.ohunter.server.net.requests.SearchRequest;
+import com.kappa_labs.ohunter.server.net.requests.LoginRequester;
+import com.kappa_labs.ohunter.server.net.requests.RegisterRequester;
+import com.kappa_labs.ohunter.server.net.requests.SearchRequester;
 import com.kappa_labs.ohunter.server.utils.PasswordUtils;
 import java.awt.Color;
 import java.awt.FontMetrics;
@@ -73,7 +73,7 @@ public class OHunterServer {
         char[] passwd = "heslo".toCharArray();
         try {
             /* Registrace noveho hrace */
-            RegisterRequest rr = new RegisterRequest(nickname, PasswordUtils.getDigest(passwd));
+            RegisterRequester rr = new RegisterRequester(nickname, PasswordUtils.getDigest(passwd));
             Response re_rr = rr.execute();
             player = re_rr.player;
             if (player != null) {
@@ -87,7 +87,7 @@ public class OHunterServer {
             /* Uzivatel je jiz registrovan, lze pouzit login */
             if (ex1.getExType() == OHException.EXType.DUPLICATE_USER) {
                 try {
-                    LoginRequest lr = new LoginRequest(nickname, PasswordUtils.getDigest(passwd));
+                    LoginRequester lr = new LoginRequester(nickname, PasswordUtils.getDigest(passwd));
                     Response re_lr = lr.execute();
                     player = re_lr.player;
                     if (player != null) {
@@ -108,13 +108,13 @@ public class OHunterServer {
 //                rpr.execute();
                 
                 // Hlinsko a okoli
-                SearchRequest sr = new SearchRequest(
+                SearchRequester sr = new SearchRequester(
                         player, 49.7621308, 15.9075567, 10000, Photo.DAYTIME.DAY, 1280, 720);
                 // Vysehrad
-//                SearchRequest sr = new SearchRequest(
+//                SearchRequester sr = new SearchRequester(
 //                        player, 50.0647411, 14.4196972, 200, Photo.DAYTIME.DAY, 1280, 720);
                 // Staromestske namesti
-//                SearchRequest sr = new SearchRequest(
+//                SearchRequester sr = new SearchRequester(
 //                        player, 50.0872842, 14.4213600, 200, Photo.DAYTIME.DAY, 1280, 720);
                 
                 Response re_sr = sr.execute();

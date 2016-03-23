@@ -1,29 +1,28 @@
-
 package com.kappa_labs.ohunter.server.net.requests;
 
+import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
-import com.kappa_labs.ohunter.lib.requests.Request;
+import com.kappa_labs.ohunter.lib.requests.BlockPlaceRequest;
 import com.kappa_labs.ohunter.server.database.DatabaseService;
 
+public class BlockPlaceRequester extends com.kappa_labs.ohunter.lib.requests.BlockPlaceRequest {
 
-public class LoginRequest extends com.kappa_labs.ohunter.lib.requests.LoginRequest {
+    public BlockPlaceRequester(Player player, String placeID) {
+        super(player, placeID);
+    }
 
-    public LoginRequest(String nickname, String password) {
-        super(nickname, password);
+    public BlockPlaceRequester(BlockPlaceRequest request) {
+        super(request);
     }
-    
-    public LoginRequest(Request r) {
-        super((com.kappa_labs.ohunter.lib.requests.LoginRequest) r);
-    }
-    
+
     @Override
     public Response execute() throws OHException {
         DatabaseService ds = new DatabaseService();
-        player = ds.loginPlayer(nickname, password);
+        ds.blockPlace(placeID);
         Response response = new Response(player);
-        
+
         return response;
     }
-    
+
 }

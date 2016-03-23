@@ -1,28 +1,27 @@
-
 package com.kappa_labs.ohunter.server.net.requests;
 
+import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.server.database.DatabaseService;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
-import com.kappa_labs.ohunter.lib.requests.Request;
+import com.kappa_labs.ohunter.lib.requests.UpdatePlayerRequest;
 
+public class UpdatePlayerRequester extends com.kappa_labs.ohunter.lib.requests.UpdatePlayerRequest {
 
-public class RegisterRequest extends com.kappa_labs.ohunter.lib.requests.RegisterRequest {
-
-    public RegisterRequest(String nickname, String password) {
-        super(nickname, password);
+    public UpdatePlayerRequester(Player player) {
+        super(player);
     }
-    
-    public RegisterRequest(Request r) {
-        super((com.kappa_labs.ohunter.lib.requests.RegisterRequest) r);
+
+    public UpdatePlayerRequester(UpdatePlayerRequest request) {
+        super(request);
     }
-    
+
     @Override
     public Response execute() throws OHException {
         DatabaseService ds = new DatabaseService();
-        player = ds.registerPlayer(nickname, password);
+        ds.updatePlayer(player);
         Response response = new Response(player);
-        
+
         return response;
     }
 
