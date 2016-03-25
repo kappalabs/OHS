@@ -28,15 +28,16 @@ public class Database {
     private static final String USER = "";
     private static final String PASSWORD = "";
 
-    private static final String TABLE_NAME_PLAYER = "HRAC";
+    public static final String TABLE_NAME_PLAYER = "HRAC";
+    public static final String TABLE_NAME_REJECTED = "ZAMITNUTE";
+    public static final String TABLE_NAME_BLOCKED = "BLOKOVANE";
+    public static final String TABLE_NAME_COMPLETED = "SPLNENE";
+    
     private static final String TABLE_COLUMN_PLAYER_ID = "ID_HRACE";
     private static final String TABLE_COLUMN_NICKNAME = "NICKNAME";
     private static final String TABLE_COLUMN_SCORE = "SCORE";
     private static final String TABLE_COLUMN_PASSWORD = "PASSWORD";
-    private static final String TABLE_NAME_COMPLETED = "SPLNENE";
     private static final String TABLE_COLUMN_PLACE_ID = "ID_MISTA";
-    private static final String TABLE_NAME_REJECTED = "ZAMITNUTE";
-    private static final String TABLE_NAME_BLOCKED = "BLOKOVANE";
     private static final String TABLE_COLUMN_PHOTO_ID = "ID_FOTO";
     private static final String TABLE_COLUMN_TIMESTAMP = "TIMESTAMP";
 
@@ -65,7 +66,7 @@ public class Database {
         System.setProperty("derby.system.home", systemDir);
     }
 
-    private void tryInitConnection() {
+    public void tryInitConnection() {
         if (connection == null) {
             System.out.print("Initializing database connection...");
 
@@ -88,24 +89,32 @@ public class Database {
             res = meta.getTables(null, null, TABLE_NAME_PLAYER, new String[]{"TABLE"});
             if (!res.next()) {
                 createPlayerTable(connection);
+            } else {
+                System.out.println("table " + TABLE_NAME_PLAYER + " ready");
             }
             DBUtils.closeQuietly(res);
             /* Completed table */
             res = meta.getTables(null, null, TABLE_NAME_COMPLETED, new String[]{"TABLE"});
             if (!res.next()) {
                 createCompletedTable(connection);
+            } else {
+                System.out.println("table " + TABLE_NAME_COMPLETED + " ready");
             }
             DBUtils.closeQuietly(res);
             /* Rejected table */
             res = meta.getTables(null, null, TABLE_NAME_REJECTED, new String[]{"TABLE"});
             if (!res.next()) {
                 createRejectedTable(connection);
+            } else {
+                System.out.println("table " + TABLE_NAME_REJECTED + " ready");
             }
             DBUtils.closeQuietly(res);
             /* Blocked table */
             res = meta.getTables(null, null, TABLE_NAME_BLOCKED, new String[]{"TABLE"});
             if (!res.next()) {
                 createBlockedTable(connection);
+            } else {
+                System.out.println("table " + TABLE_NAME_BLOCKED + " ready");
             }
             DBUtils.closeQuietly(res);
         } catch (SQLException ex) {
@@ -176,7 +185,7 @@ public class Database {
         return bCreatedTables;
     }
 
-    public void showPlayers() {
+    public void showTable(String tableName) {
         /* Before doing anything, check (-> instantiate) the DB connector */
         tryInitConnection();
 
@@ -184,10 +193,10 @@ public class Database {
         ResultSet rsWholeTable = null;
         try {
             stmtWholeTable = connection.createStatement();
-            rsWholeTable = stmtWholeTable.executeQuery("SELECT * FROM " + TABLE_NAME_PLAYER);
+            rsWholeTable = stmtWholeTable.executeQuery("SELECT * FROM " + tableName);
 
             ResultSetMetaData rsmd = rsWholeTable.getMetaData();
-            System.out.println("Printing the whole >" + TABLE_NAME_PLAYER + "< table:");
+            System.out.println("Printing the whole >" + tableName + "< table:");
             System.out.println("---------");
             int columnsNumber = rsmd.getColumnCount();
             while (rsWholeTable.next()) {
@@ -245,32 +254,52 @@ public class Database {
         return removed;
     }
     
-    protected boolean editPlayer(int id, String nickname, int score, String password, boolean editPassword) {
+    /**
+     * Edits the player's data. Player must be specified by his ID, other fields
+     * will be updated in the table. If the parameter is null, the appropriate
+     * value will not be changed.
+     *
+     * @param id ID number of the player to edit.
+     * @param nickname New nickname of the player, null if not changed.
+     * @param score New score of the player, null if not changed.
+     * @param password New password of the player, null if not changed.
+     * @return True on success, false on fail.
+     */
+    public boolean editPlayer(int id, String nickname, Integer score, String password) {
         /* Before doing anything, check (-> instantiate) the DB connector */
         tryInitConnection();
 
         boolean bEdited = false;
         PreparedStatement stmtEditPlayer = null;
         try {
-            if (editPassword) {
-                stmtEditPlayer = connection.prepareStatement(
-                        "UPDATE " + TABLE_NAME_PLAYER + " SET "
-                        + TABLE_COLUMN_NICKNAME + " = ?,"
-                        + TABLE_COLUMN_SCORE + " = ?,"
-                        + TABLE_COLUMN_PASSWORD + " = ? "
-                        + "WHERE " + TABLE_COLUMN_PLAYER_ID + " = ?");
-                stmtEditPlayer.setString(3, password);
-                stmtEditPlayer.setInt(4, id);
-            } else {
-                stmtEditPlayer = connection.prepareStatement(
-                        "UPDATE " + TABLE_NAME_PLAYER + " SET "
-                        + TABLE_COLUMN_NICKNAME + " = ?,"
-                        + TABLE_COLUMN_SCORE + " = ? "
-                        + "WHERE " + TABLE_COLUMN_PLAYER_ID + " = ?");
-                stmtEditPlayer.setInt(3, id);
+            String statement = "UPDATE " + TABLE_NAME_PLAYER + " SET";
+            int nicknamePos = 0;
+            if (nickname != null) {
+                nicknamePos = 1;
+                statement += " " + TABLE_COLUMN_NICKNAME + " = ?";
             }
-            stmtEditPlayer.setString(1, nickname);
-            stmtEditPlayer.setInt(2, score);
+            int scorePos = 0;
+            if (score != null) {
+                scorePos = nicknamePos + 1;
+                statement += ((scorePos > 1) ? ", " : " ") + TABLE_COLUMN_SCORE + " = ?";
+            }
+            int passwordPos = 0;
+            if (password != null) {
+                passwordPos = Math.max(nicknamePos, scorePos) + 1;
+                statement += ((passwordPos > 1) ? ", " : " ") + TABLE_COLUMN_PASSWORD + " = ?";
+            }
+            statement += " WHERE " + TABLE_COLUMN_PLAYER_ID + " = ?";
+            stmtEditPlayer = connection.prepareStatement(statement);
+            if (nicknamePos > 0) {
+                stmtEditPlayer.setString(nicknamePos, nickname);
+            }
+            if (scorePos > 0) {
+                stmtEditPlayer.setInt(scorePos, score);
+            }
+            if (passwordPos > 0) {
+                stmtEditPlayer.setString(passwordPos, password);
+            }
+            stmtEditPlayer.setInt(Math.max(nicknamePos, Math.max(scorePos, passwordPos)) + 1, id);
             stmtEditPlayer.executeUpdate();
             bEdited = true;
         } catch (SQLException ex) {

@@ -186,24 +186,67 @@ public class Server {
             
             String text;
             System.out.print(PROMPT);
-            while ((text = sc.next()) != null) {
-                switch(text.toLowerCase().trim()) {
+            while ((text = sc.nextLine()) != null) {
+                String args[] = text.trim().split("\\s+");
+                switch (args[0].toLowerCase()) {
                     case "help":
                         System.out.println("ServerService: help\n"
                                 + "help - prints this message\n"
                                 + "state - prints state of the thread pool\n"
-                                + "database - prints table of all players in the database\n"
-                                + "del-player - deletes player with given ID from the database\n"
+                                + "database - tries to initialize the database\n"
+                                + "table show 'name' - prints whole database table with given name\n"
+                                + "player remove 'playerID' - deletes player with given ID from the database\n"
+                                + "player setscore 'playerID' 'score' - sets score of player with given ID\n"
+                                + "player setname 'playerID' 'name' - sets name of player with given ID\n"
                                 + "exit - terminate threads and shutdown the server");
                         break;
                     case "state":
                         System.out.println("ServerService: " + mExecutor.toString());
                         break;
                     case "database":
-                        Database.getInstance().showPlayers();
+                        Database.getInstance().tryInitConnection();
                         break;
-                    case "del-player":
-                        deletePlayer(sc);
+                    case "table":
+                        if (args.length < 3) {
+                            System.out.println("ServerService: unknown command, try 'help'");
+                            break;
+                        }
+                        switch (args[1].toLowerCase()) {
+                            case "show":
+                                Database.getInstance().showTable(args[2]);
+                                break;
+                            default:
+                                System.out.println("ServerService: unknown command, try 'help'");
+                        }
+                        break;
+                    case "player":
+                        if (args.length < 3) {
+                            System.out.println("ServerService: unknown command, try 'help'");
+                            break;
+                        }
+                        try {
+                        int playerID = Integer.parseInt(args[2]);
+                            switch (args[1].toLowerCase()) {
+                                case "remove":
+                                    Database.getInstance().removePlayer(playerID);
+                                    break;
+                                case "setscore":
+                                    if (args.length < 4) {
+                                        System.out.println("ServerService: unknown command, try 'help'");
+                                        break;
+                                    }
+                                    int score = Integer.parseInt(args[3]);
+                                    Database.getInstance().editPlayer(playerID, null, score, null);
+                                    break;
+                                case "setname":
+                                    Database.getInstance().editPlayer(playerID, args[3], null, null);
+                                    break;
+                                default:
+                                    System.out.println("ServerService: unknown command, try 'help'");
+                            }
+                        } catch (NumberFormatException ex) {
+                            System.out.println("ServerService: wrong number, try 'help'");
+                        }
                         break;
                     case "exit":
                         shutdown();
@@ -214,20 +257,6 @@ public class Server {
                         System.out.println("ServerService: unknown command, try 'help'");
                 }
                 System.out.print(PROMPT);
-            }
-        }
-        
-        private void deletePlayer(Scanner sc) {
-            System.out.print(" -> Insert player ID: ");
-            try {
-                int id = Integer.parseInt(sc.next());
-                if (Database.getInstance().removePlayer(id)) {
-                    System.out.println(" -> OK, player removed");
-                } else {
-                    System.out.println(" -> ERROR when removing");
-                }
-            } catch (NumberFormatException ex) {
-                System.err.println(" -> wrong number format");
             }
         }
         

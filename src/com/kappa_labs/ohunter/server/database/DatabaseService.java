@@ -55,7 +55,7 @@ public class DatabaseService {
      * @throws OHException When exception in the database arises.
      */
     public void resetPlayer(Player player) throws OHException {
-        if (database.editPlayer(player.getUID(), player.getNickname(), DEFAULT_SCORE, null, false)) {
+        if (database.editPlayer(player.getUID(), player.getNickname(), DEFAULT_SCORE, null)) {
             player.setScore(DEFAULT_SCORE);
         } else {
             throw new OHException("Error while editing player score!", OHException.EXType.DATABASE_ERROR);
@@ -115,7 +115,7 @@ public class DatabaseService {
                         OHException.EXType.DATABASE_ERROR);
         }
         if (uid != -2) {
-            if (!database.editPlayer(player.getUID(), player.getNickname(), player.getScore(), null, false)) {
+            if (!database.editPlayer(player.getUID(), player.getNickname(), player.getScore(), null)) {
                 throw new OHException("Error while editing player values!", OHException.EXType.DATABASE_ERROR);
             }
         }
@@ -149,7 +149,7 @@ public class DatabaseService {
         }
         
         if (!database.editPlayer(player.getUID(), player.getNickname(),
-                player.getScore(), newPassword, true)) {
+                player.getScore(), newPassword)) {
             throw new OHException("Error while changing the password!",
                     OHException.EXType.DATABASE_ERROR);
         }

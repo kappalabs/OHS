@@ -67,7 +67,7 @@ public class OHunterServer {
     
     private static void testDatabase() throws RemoteException {
         /* Vypis obsahu databaze */
-        Database.getInstance().showPlayers();
+        Database.getInstance().showTable(Database.TABLE_NAME_PLAYER);
         Player player = null;
         String nickname = "root";
         char[] passwd = "heslo".toCharArray();

@@ -52,7 +52,7 @@ public class Segmenter {
         try {
             File nsDir = new File("results/_nonsegmented/");
             nsDir.mkdirs();
-            ImageIO.write(((SImage)photo.sImage).toBufferedImage(), "jpg", new File(nsDir + "/" + photo.toString() + (a) + ".jpg"));
+            ImageIO.write(((SImage)photo.sImage).toBufferedImage(), "jpg", new File(nsDir + "/" + (a) + "_" + photo.generateName(32) + ".jpg"));
         } catch (IOException ex) { }
         
         /* Convert image to custom representation in HSV model */
@@ -91,7 +91,7 @@ public class Segmenter {
         try {
             File sDir = new File("results/_segmented/");
             sDir.mkdirs();
-            ImageIO.write(nbi, "jpg", new File(sDir + "/" + photo.toString() + (a++) + ".jpg"));
+            ImageIO.write(nbi, "jpg", new File(sDir + "/" + (a++) + "_" + photo.generateName(32) + ".jpg"));
         } catch (IOException ex) { }
         /* Save it into a field in the Photo object */
         photo._sImage = new SImage(nbi);
