@@ -15,7 +15,7 @@ public class DatabaseService {
     /**
      * Default starting score for every new player.
      */
-    public static final int DEFAULT_SCORE = 42;
+    public static final int DEFAULT_SCORE = 100;
     
     
     /**

@@ -24,7 +24,7 @@ public class FillPlacesRequester extends com.kappa_labs.ohunter.lib.requests.Fil
     /**
      * Number of threads allowed for PlaceFiller thread pool.
      */
-    private static final int NUM_FILLER_THREADS = 256;
+    private static final int NUM_FILLER_THREADS = 32;
     /**
      * Number of threads allowed to retrieve photos for each place.
      */
@@ -45,7 +45,7 @@ public class FillPlacesRequester extends com.kappa_labs.ohunter.lib.requests.Fil
         List<Place> filledPlaces = new ArrayList<>();
         ExecutorService executor = Executors.newFixedThreadPool(NUM_FILLER_THREADS);
         for (Place place : places) {
-            executor.execute(new PlaceFiller(place, filledPlaces, width, height, NUM_PHOTO_THREADS));
+            executor.execute(new PlaceFiller(place, filledPlaces, width, height, daytime, NUM_PHOTO_THREADS));
         }
         executor.shutdown();
         try {

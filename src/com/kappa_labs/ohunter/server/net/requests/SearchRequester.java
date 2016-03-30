@@ -79,7 +79,7 @@ public class SearchRequester extends com.kappa_labs.ohunter.lib.requests.SearchR
         List<Place> places = new ArrayList<>();
         ExecutorService executor = Executors.newFixedThreadPool(NUM_FILLER_THREADS);
         for (Place place : all_places) {
-            executor.execute(new PlaceFiller(place, places, width, height, NUM_PHOTO_THREADS));
+            executor.execute(new PlaceFiller(place, places, width, height, daytime, NUM_PHOTO_THREADS));
         }
         executor.shutdown();
         try {

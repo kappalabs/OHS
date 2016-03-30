@@ -27,6 +27,7 @@ public class PlaceFiller implements Runnable {
     private final Place mPlace;
     private final List<Place> mPlaces;
     private final int width, height;
+    private final Photo.DAYTIME daytime;
     private final int maxThreads;
 
 
@@ -39,13 +40,15 @@ public class PlaceFiller implements Runnable {
      * @param places The List, where the valid result should be placed.
      * @param width The maximum width of photos for given place.
      * @param height The maximum height of photos for given place.
+     * @param daytime The preferred daytime of the photos.
      * @param maxThreads The maximum number of threads to retrieve photos for each place.
      */
-    public PlaceFiller(Place place, List<Place> places, int width, int height, int maxThreads) {
+    public PlaceFiller(Place place, List<Place> places, int width, int height, Photo.DAYTIME daytime, int maxThreads) {
         this.mPlace = place;
         this.mPlaces = places;
         this.width = width;
         this.height = height;
+        this.daytime = daytime;
         this.maxThreads = maxThreads;
     }
 
@@ -55,12 +58,11 @@ public class PlaceFiller implements Runnable {
         if (photos == null) {
             return;
         }
-        mPlace.addPhotos(photos);
         
         /* Retrieve these photos */
         ExecutorService executor = Executors.newFixedThreadPool(maxThreads);        
         photos.stream().forEach((photo) -> {
-            executor.execute(new PhotosFiller(photo, width, height));
+            executor.execute(new PhotosFiller(mPlace, photo, width, height, daytime));
         });
         executor.shutdown();
         try {
@@ -69,7 +71,10 @@ public class PlaceFiller implements Runnable {
             Logger.getLogger(SearchRequester.class.getName()).log(Level.WARNING, null, ex);
         }
         
-        mPlaces.add(mPlace);
+        /* Add only places with some photos, other are of no use on the client */
+        if (mPlace.getNumberOfPhotos() > 0) {
+            mPlaces.add(mPlace);
+        }
     }
     
     /**
@@ -77,20 +82,40 @@ public class PlaceFiller implements Runnable {
      */
     private class PhotosFiller implements Runnable {
         
-        private Photo photo;
+        private final Place place;
+        private final Photo photo;
         private final int width, height;
+        private final Photo.DAYTIME daytime;
 
-        public PhotosFiller(Photo photo, int width, int height) {
+        public PhotosFiller(Place place, Photo photo, int width, int height, Photo.DAYTIME daytime) {
+            this.place = place;
             this.photo = photo;
             this.width = width;
             this.height = height;
+            this.daytime = daytime;
         }
 
         @Override
         public void run() {
-            photo = PlacesGetter.photoRequest(photo, width, height);
-            if (Analyzer.isNight(photo)) {
+            /* Download the image and store it into the photo */
+            PlacesGetter.photoRequest(photo, width, height);
+            /* Determine whether the image was photographed at night */
+            boolean isNight = Analyzer.isNight(photo);
+            if (isNight) {
                 photo.daytime = Photo.DAYTIME.NIGHT;
+            }
+            /* Add this photo to the place only if it has requested daytime */
+            boolean addPhoto = true;
+            switch (daytime) {
+                case DAY:
+                    addPhoto = !isNight;
+                    break;
+                case NIGHT:
+                    addPhoto = isNight;
+                    break;
+            }
+            if (addPhoto) {
+                place.addPhoto(photo);
             }
         }
     
