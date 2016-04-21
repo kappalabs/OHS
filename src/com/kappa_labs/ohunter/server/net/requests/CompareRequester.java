@@ -28,6 +28,9 @@ public class CompareRequester extends com.kappa_labs.ohunter.lib.requests.Compar
         }
         Response response = new Response(uid);
         response.similarity = bestSimilarity;
+        if (referencePhoto.daytime == Photo.DAYTIME.NIGHT) {
+            response.similarity /= 2;
+        }
 
         return response;
     }

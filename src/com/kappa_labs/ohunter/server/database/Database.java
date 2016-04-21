@@ -1,6 +1,7 @@
 package com.kappa_labs.ohunter.server.database;
 
 import com.kappa_labs.ohunter.server.utils.DBUtils;
+import java.io.File;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -28,18 +29,18 @@ public class Database {
     private static final String USER = "";
     private static final String PASSWORD = "";
 
-    public static final String TABLE_NAME_PLAYER = "HRAC";
-    public static final String TABLE_NAME_REJECTED = "ZAMITNUTE";
-    public static final String TABLE_NAME_BLOCKED = "BLOKOVANE";
+    public static final String TABLE_NAME_PLAYER    = "HRAC";
+    public static final String TABLE_NAME_REJECTED  = "ZAMITNUTE";
+    public static final String TABLE_NAME_BLOCKED   = "BLOKOVANE";
     public static final String TABLE_NAME_COMPLETED = "SPLNENE";
     
-    private static final String TABLE_COLUMN_PLAYER_ID = "ID_HRACE";
-    private static final String TABLE_COLUMN_NICKNAME = "NICKNAME";
-    private static final String TABLE_COLUMN_SCORE = "SCORE";
-    private static final String TABLE_COLUMN_PASSWORD = "PASSWORD";
-    private static final String TABLE_COLUMN_PLACE_ID = "ID_MISTA";
-    private static final String TABLE_COLUMN_PHOTO_ID = "ID_FOTO";
-    private static final String TABLE_COLUMN_TIMESTAMP = "TIMESTAMP";
+    private static final String TABLE_COLUMN_PLAYER_ID  = "ID_HRACE";
+    private static final String TABLE_COLUMN_NICKNAME   = "PREZDIVKA";
+    private static final String TABLE_COLUMN_SCORE      = "SKORE";
+    private static final String TABLE_COLUMN_PASSWORD   = "HESLO";
+    private static final String TABLE_COLUMN_PLACE_ID   = "ID_CILE";
+    private static final String TABLE_COLUMN_PHOTO_ID   = "ID_FOTO";
+    private static final String TABLE_COLUMN_TIMESTAMP  = "TIMESTAMP";
 
     private Connection connection;
 
@@ -60,7 +61,7 @@ public class Database {
     private static void setDBSystemDir() {
         /* Decide on the db system directory: <userhome>/.<table-name>/ */
         String userHomeDir = System.getProperty("user.home", ".");
-        String systemDir = userHomeDir + "/." + DB_NAME;
+        String systemDir = userHomeDir + File.separator + "." + DB_NAME;
 
         /* Set the db system directory. */
         System.setProperty("derby.system.home", systemDir);
