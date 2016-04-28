@@ -19,7 +19,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class SearchRequester extends com.kappa_labs.ohunter.lib.requests.SearchRequest {
+/**
+ * Implementation of the SearchRequest from the OHL.
+ */
+public class SearchRequester extends SearchRequest {
 
     /**
      * Number of minutes to wait for thread termination.

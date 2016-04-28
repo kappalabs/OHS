@@ -6,7 +6,10 @@ import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.RegisterRequest;
 
-public class RegisterRequester extends com.kappa_labs.ohunter.lib.requests.RegisterRequest {
+/**
+ * Implementation of the RegisterRequest from the OHL.
+ */
+public class RegisterRequester extends RegisterRequest {
 
     public RegisterRequester(String nickname, String password) {
         super(nickname, password);

@@ -11,7 +11,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class RadarSearchRequester extends com.kappa_labs.ohunter.lib.requests.RadarSearchRequest {
+/**
+ * Implementation of the RadarSearchRequest from the OHL.
+ */
+public class RadarSearchRequester extends RadarSearchRequest {
 
     /**
      * Types of objects, that will be returned as result photos, supported by

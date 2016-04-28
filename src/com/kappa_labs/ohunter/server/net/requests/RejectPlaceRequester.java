@@ -6,7 +6,10 @@ import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.RejectPlaceRequest;
 import com.kappa_labs.ohunter.server.database.DatabaseService;
 
-public class RejectPlaceRequester extends com.kappa_labs.ohunter.lib.requests.RejectPlaceRequest {
+/**
+ * Implementation of the RejectPlaceRequest from the OHL.
+ */
+public class RejectPlaceRequester extends RejectPlaceRequest {
 
     public RejectPlaceRequester(Player player, String placeID) {
         super(player, placeID);

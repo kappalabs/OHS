@@ -1,5 +1,6 @@
 package com.kappa_labs.ohunter.server.database;
 
+import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.server.utils.DBUtils;
 import java.io.File;
 import java.sql.Connection;
@@ -218,6 +219,37 @@ public class Database {
             DBUtils.closeQuietly(stmtWholeTable);
             DBUtils.closeQuietly(rsWholeTable);
         }
+    }
+    
+    public Player[] getBestPlayers(int count) {
+        /* Before doing anything, check (-> instantiate) the DB connector */
+        tryInitConnection();
+
+        Player[] bestPlayers = new Player[count];
+        int position = 0;
+        PreparedStatement stmtGetBests = null;
+        try {
+            /* Remove player from Player table */
+            stmtGetBests = connection.prepareStatement(
+                    "SELECT " + TABLE_COLUMN_NICKNAME + "," + TABLE_COLUMN_SCORE
+                            + " FROM " + TABLE_NAME_PLAYER
+                            + " ORDER BY " + TABLE_COLUMN_SCORE + " DESC"
+                            + " FETCH FIRST ? ROWS ONLY");
+            stmtGetBests.setInt(1, count);
+            
+            ResultSet results = stmtGetBests.executeQuery();
+            while (results.next()) {
+                String name = results.getString(TABLE_COLUMN_NICKNAME);
+                int score = results.getInt(TABLE_COLUMN_SCORE);
+                bestPlayers[position++] = new Player(-1, name, score);
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(Database.class.getName()).log(Level.WARNING, null, ex);
+            closeDatabase();
+        } finally {
+            DBUtils.closeQuietly(stmtGetBests);
+        }
+        return bestPlayers;
     }
 
     public boolean removePlayer(int ID) {

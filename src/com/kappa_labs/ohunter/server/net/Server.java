@@ -1,6 +1,7 @@
 
 package com.kappa_labs.ohunter.server.net;
 
+import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.requests.Request;
@@ -198,6 +199,7 @@ public class Server {
                                 + "player remove 'playerID' - deletes player with given ID from the database\n"
                                 + "player setscore 'playerID' 'score' - sets score of player with given ID\n"
                                 + "player setname 'playerID' 'name' - sets name of player with given ID\n"
+                                + "bests 'count' - prints the 'count' best players\n"
                                 + "exit - terminate threads and shutdown the server");
                         break;
                     case "state":
@@ -246,6 +248,19 @@ public class Server {
                             }
                         } catch (NumberFormatException ex) {
                             System.out.println("ServerService: wrong number, try 'help'");
+                        }
+                        break;
+                    case "bests":
+                        if (args.length < 2) {
+                            System.out.println("ServerService: unknown command, try 'help'");
+                            break;
+                        }
+                        int count = Integer.parseInt(args[1]);
+                        Player[] bests = Database.getInstance().getBestPlayers(count);
+                        System.out.println("Best players:");
+                        for (int i = 0; i < bests.length && i < count; i++) {
+                            Player best = bests[i];
+                            System.out.println(best);
                         }
                         break;
                     case "exit":

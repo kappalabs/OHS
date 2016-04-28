@@ -6,7 +6,10 @@ import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.UpdatePlayerRequest;
 
-public class UpdatePlayerRequester extends com.kappa_labs.ohunter.lib.requests.UpdatePlayerRequest {
+/**
+ * Implementation of the UpdatePlayerRequest from the OHL.
+ */
+public class UpdatePlayerRequester extends UpdatePlayerRequest {
 
     public UpdatePlayerRequester(Player player) {
         super(player);

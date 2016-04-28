@@ -19,6 +19,16 @@ public class DatabaseService {
     
     
     /**
+     * Gets the list of few best players in the game.
+     * 
+     * @param count The maximum number of best players.
+     * @return The array of the best players.
+     */
+    public Player[] getBestPlayers(int count) {
+        return database.getBestPlayers(count);
+    }
+    
+    /**
      * Try to register a new player with given name and password.
      * Return the Player object on success, otherwise throw OHException.
      * 

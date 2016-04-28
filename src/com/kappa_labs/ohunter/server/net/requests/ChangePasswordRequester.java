@@ -6,7 +6,10 @@ import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.ChangePasswordRequest;
 import com.kappa_labs.ohunter.server.database.DatabaseService;
 
-public class ChangePasswordRequester extends com.kappa_labs.ohunter.lib.requests.ChangePasswordRequest {
+/**
+ * Implementation of the ChangePasswordRequest from the OHL.
+ */
+public class ChangePasswordRequester extends ChangePasswordRequest {
 
     public ChangePasswordRequester(Player player, String oldPassword, String newPassword) {
         super(player, oldPassword, newPassword);

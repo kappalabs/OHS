@@ -6,7 +6,10 @@ import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.CompletePlaceRequest;
 import com.kappa_labs.ohunter.server.database.DatabaseService;
 
-public class CompletePlaceRequester extends com.kappa_labs.ohunter.lib.requests.CompletePlaceRequest {
+/**
+ * Implementation of the CompletePlaceRequest from the OHL.
+ */
+public class CompletePlaceRequester extends CompletePlaceRequest {
 
     public CompletePlaceRequester(Player player, String placeID, String photoReference) {
         super(player, placeID, photoReference);
@@ -15,7 +18,7 @@ public class CompletePlaceRequester extends com.kappa_labs.ohunter.lib.requests.
     public CompletePlaceRequester(Player player, String placeID, String photoReference, int discoveryGain, int similarityGain) {
         super(player, placeID, photoReference, discoveryGain, similarityGain);
     }
-    
+
     public CompletePlaceRequester(CompletePlaceRequest request) {
         super(request);
     }

@@ -15,7 +15,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class FillPlacesRequester extends com.kappa_labs.ohunter.lib.requests.FillPlacesRequest {
+/**
+ * Implementation of the FillPlacesRequest from the OHL.
+ */
+public class FillPlacesRequester extends FillPlacesRequest {
 
     /**
      * Number of minutes to wait for thread termination.

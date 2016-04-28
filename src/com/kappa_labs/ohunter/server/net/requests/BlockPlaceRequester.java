@@ -6,7 +6,10 @@ import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.BlockPlaceRequest;
 import com.kappa_labs.ohunter.server.database.DatabaseService;
 
-public class BlockPlaceRequester extends com.kappa_labs.ohunter.lib.requests.BlockPlaceRequest {
+/**
+ * Implementation of the BlockPlaceRequest from the OHL.
+ */
+public class BlockPlaceRequester extends BlockPlaceRequest {
 
     public BlockPlaceRequester(Player player, String placeID) {
         super(player, placeID);

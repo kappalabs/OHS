@@ -1,4 +1,3 @@
-
 package com.kappa_labs.ohunter.server.analyzer;
 
 import com.kappa_labs.ohunter.lib.entities.Photo;
@@ -19,11 +18,12 @@ import java.util.Random;
  * Class providing a method for measuring the similarity of two given images.
  */
 public class Analyzer {
-    
+
     public static final int DEFAULT_NUM_SAMPLES = 78;
     public static final int DEFAULT_NIGHT_THRESHOLD = 80;
     public static final int OPTIMAL_WIDTH = 256;
     public static final int OPTIMAL_HEIGHT = OPTIMAL_WIDTH;
+
     
     private Analyzer() {
         /* Analyzer cannot be instantiated from outside of this class */
@@ -32,26 +32,27 @@ public class Analyzer {
     /**
      * For given two photos, count their similarity. The result is from interval
      * [0;1], 1 means perfect match, 0 totaly different.
-     * 
+     *
      * @param ph1 First photo.
      * @param ph2 Second photo.
      * @return Similarity of given photos from interval [0;1];
-     * @throws com.kappa_labs.ohunter.lib.net.OHException When Photos are wrongly set.
+     * @throws com.kappa_labs.ohunter.lib.net.OHException When Photos are
+     * wrongly set.
      */
     public static float computeSimilarity(Photo ph1, Photo ph2) throws OHException {
         float ret = 0;
-        
+
         /* Scale the images to provide the best results */
         try {
             ph1.sImage = ph1._sImage = new SImage(ph1.sImage);
             ph2.sImage = ph2._sImage = new SImage(ph2.sImage);
-            ((SImage)ph1.sImage).setImage(resize(((SImage)ph1._sImage).toBufferedImage()));
-            ((SImage)ph2.sImage).setImage(resize(((SImage)ph2._sImage).toBufferedImage()));
-        } catch(Exception e) {
-            System.err.println("Could not acquire photos from client: "+e);
+            ((SImage) ph1.sImage).setImage(resize(((SImage) ph1._sImage).toBufferedImage()));
+            ((SImage) ph2.sImage).setImage(resize(((SImage) ph2._sImage).toBufferedImage()));
+        } catch (Exception e) {
+            System.err.println("Could not acquire photos from client: " + e);
             throw new OHException("Could not acquire photos!", OHException.EXType.OTHER);
         }
-        
+
         /* Count average from few attempts */
         final int poc = 5;
         int iteration = poc;
@@ -59,14 +60,14 @@ public class Analyzer {
             /* Perform segmentation */
             Segment[] segs1 = Segmenter.segment(ph1);
             Segment[] segs2 = Segmenter.segment(ph2);
-            System.out.println("... mam "+segs1.length+" prvnich a "+segs2.length+" druhych");
+            System.out.println("... mam " + segs1.length + " prvnich a " + segs2.length + " druhych");
 
             /* Create new Problem from given counted segments */
             Problem problem = new Problem();
             prepareDistribution(problem, segs1, ph1, true);
             prepareDistribution(problem, segs2, ph2, false);
 
-    //        System.out.println("LP:\n"+problem.toMathProg());
+            //        System.out.println("LP:\n"+problem.toMathProg());
 
             /* Solve the EMP linear problem and return the final result */
             EMDSolver empm = new EMDSolver(problem);
@@ -75,26 +76,27 @@ public class Analyzer {
             ret += act;
         }
         ret /= poc;
-        
+
         return 1f - ret;
     }
-    
+
     /**
-     * Resize input image so that its size matches the optimal image size boundary.
-     * 
+     * Resize input image so that its size matches the optimal image size
+     * boundary.
+     *
      * @param image The input image to be resized.
      * @return The resized image matching the optimal size boundary.
      */
     public static BufferedImage resize(BufferedImage image) {
         double divider = Math.max(
-                (double)image.getWidth() / OPTIMAL_WIDTH,
-                (double)image.getHeight() / OPTIMAL_HEIGHT);
-        return resize(image, (int)(image.getWidth() / divider), (int)(image.getHeight() / divider));
+                (double) image.getWidth() / OPTIMAL_WIDTH,
+                (double) image.getHeight() / OPTIMAL_HEIGHT);
+        return resize(image, (int) (image.getWidth() / divider), (int) (image.getHeight() / divider));
     }
-    
+
     /**
      * Resize given image to specified dimensions.
-     * 
+     *
      * @param image Image for modification.
      * @param width Desired new image width.
      * @param height Desired new image height.
@@ -105,15 +107,15 @@ public class Analyzer {
         Graphics2D _g2d = resized.createGraphics();
         _g2d.drawImage(image, 0, 0, width, height, null);
         _g2d.dispose();
-       
+
         return resized;
     }
-    
+
     private static float[] toHSB(float[] moment) {
         float[] rgb = CIELab.getInstance().toRGB(moment);
         return Color.RGBtoHSB((int) (rgb[0] * 255), (int) (rgb[1] * 255), (int) (rgb[2] * 255), null);
     }
-    
+
     private static void prepareDistribution(Problem problem, Segment[] segments, Photo photo, boolean isFirst) {
         int area = photo.getWidth() * photo.getHeight();
         int max_dimension = Math.max(photo.getWidth(), photo.getHeight());
@@ -121,10 +123,10 @@ public class Analyzer {
             DistrPair dp = new DistrPair();
 //            dp.weight = (double)seg.getSumPixels() / area;
             /* Original method uses sqrt */
-            dp.weight = Math.sqrt((double)seg.getSumPixels() / area);
+            dp.weight = Math.sqrt((double) seg.getSumPixels() / area);
             Vector vect = new Vector(14);
             Addterator<Float> addter = vect.addterator();
-            
+
             /* Color moments - 9 elements in total */
             float[] mean_hsb = seg.getMean();
             float[] stdev_hsb = seg.getStdDeviation();
@@ -142,23 +144,16 @@ public class Analyzer {
             int o_height = seg.getBottom() - seg.getTop();
             o_height = Math.max(o_height, 1);
             int o_area = o_width * o_height;
-            /* NOTE: experimental, puvodni hodnoty ze specifikace nebyly vhodne,
-                pouzitym zpusobem jsem normalizoval kazdou slozku vektoru do intervalu
-                [0;1], tzn. L1 metriku staci vydelit poctem slozek vektoru a
-                ziskam tak hodnotu podobnosti obrazku z intervalu [0;1]
-            */
             /* original - ze specifikace */
 //            addter.add((float)Math.log((double)o_width / o_height));
 //            addter.add((float)Math.log(o_area));
             /* modified */
-            addter.add((float)Math.log((double)o_width / o_height + 1)); 
-            addter.add((float)Math.log((double)o_area / area + 1));
-            addter.add((float)seg.getSumPixels() / o_area);
-            addter.add((float)seg.getX() / photo.getWidth());
-            addter.add((float)seg.getY() / photo.getHeight());
-            
-//            System.out.println("vect = "+vect);
-            
+            addter.add((float) Math.log((double) o_width / o_height + 1));
+            addter.add((float) Math.log((double) o_area / area + 1));
+            addter.add((float) seg.getSumPixels() / o_area);
+            addter.add((float) seg.getX() / photo.getWidth());
+            addter.add((float) seg.getY() / photo.getHeight());
+
             dp.vector = vect;
             if (isFirst) {
                 problem.distr1.add(dp);
@@ -167,14 +162,14 @@ public class Analyzer {
             }
         }
     }
-   
+
     /**
      * Determines if given photo contains night picture.
-     * 
+     *
      * @param photo The photo to analyze.
      * @return True if the given photo contains night picture, false otherwise.
      */
-    public static boolean isNight(Photo photo) {   
+    public static boolean isNight(Photo photo) {
         BufferedImage img = ((SImage) photo.sImage).toBufferedImage();
         Random rand = new Random();
         int x, y, souc = 0;
@@ -184,15 +179,14 @@ public class Analyzer {
             souc += argbToByte(img.getRGB(x, y));
         }
         float val = (souc / DEFAULT_NUM_SAMPLES);
-//        System.out.println("night value = "+val);
         return val < DEFAULT_NIGHT_THRESHOLD;
     }
-    
+
     /**
      * Convert argb 4-byte color value to one byte value.
-     * 
+     *
      * @param argb Input 4-byte value.
-     * @return 
+     * @return
      */
     private static int argbToByte(int argb) {
         int ret = 0;
@@ -201,5 +195,5 @@ public class Analyzer {
         ret += ((argb & 0xff0000) >> 16) / 3;
         return ret;
     }
-    
+
 }
