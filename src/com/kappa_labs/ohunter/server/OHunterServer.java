@@ -34,14 +34,13 @@ import javax.imageio.ImageIO;
  */
 public class OHunterServer {
     
-    private static final String PHOTOS_DIR = "./photos/";
     private static final String RESOURCES = "./resources/";
     private static final String DARK_MODELS = RESOURCES + "models/";
     private static final String DARK = RESOURCES + "dark/";
     private static final String ANALYZER = RESOURCES + "analyzer/";
     private static final String RESULTS = "./results/";
     private static final String ANALYZER_RESULTS = RESULTS + "analyzer/";
-    private static final String MODEL_RESULTS = RESULTS + "models/";
+    private static final String PHOTOS_DIR = RESULTS + "photos/";
     
     private static final String[] FILES_ANALYZE;
     private static final String[] FILES_MODEL;
@@ -119,8 +118,11 @@ public class OHunterServer {
                 
                 Response re_sr = sr.execute();
                 /* Vypis informaci o ziskanych mistech a jejich lokalni ulozeni */
-                System.out.println("saving places into " + PHOTOS_DIR + "...");
                 File f = new File(PHOTOS_DIR);
+                if (!f.exists()) {
+                    f.mkdirs();
+                }
+                System.out.println("saving places into " + f.getAbsolutePath() + "...");
                 if (f.list() != null && f.list().length != 0) {
                     System.err.println("places directory is not empty");
                 }
@@ -128,8 +130,14 @@ public class OHunterServer {
                 System.out.println("List of retrieved places:");
                 for (Place place : re_sr.places) {
                     System.out.println("place: "+place);
-//                    place.saveToFile(null);
-//TODO: novy save to file pristup
+                    place.getPhotos().stream().forEach((photo) -> {
+                        File outFile = new File(f, photo.generateName(64) + ".jpg");
+                        try {
+                            ImageIO.write(((SImage) photo.sImage).toBufferedImage(), "jpg", outFile);
+                        } catch (IOException ex) {
+                            Logger.getLogger(OHunterServer.class.getName()).log(Level.WARNING, null, ex);
+                        }
+                    });
                 }
             } catch (OHException ex) {
                 System.err.println(ex.getMessage());
@@ -152,8 +160,7 @@ public class OHunterServer {
      */
     private static void testNight() {
         /* Test porovnavani obrazku */
-        Photo ph1 = new Photo();
-        Photo ph2 = new Photo();
+        Photo photo = new Photo();
         
         if (FILES_DARK == null) {
             System.err.println("night test needs resource images in "+DARK);
@@ -166,25 +173,11 @@ public class OHunterServer {
         
         for (String dark : FILES_DARK) {
             System.out.println("Dark image: "+dark);
-            loadImg(DARK + dark, ph1);
-            if (Analyzer.isNight(ph1)) {
+            loadImg(DARK + dark, photo);
+            if (Analyzer.isNight(photo)) {
                 System.out.println(" - at night");
             } else {
                 System.out.println(" - not at night");
-            }
-            for (String model : FILES_MODEL) {
-                System.out.println(" -> against model: "+model);
-                loadImg(DARK_MODELS + model, ph2);
-                float similarity;
-                try {
-                    similarity = Analyzer.computeSimilarity(ph1, ph2);
-                    System.out.println(" -> similarity = " + similarity + ", pc = "
-                            + (1.f - similarity)*100 + "%");
-                    photoConnect(ANALYZER_RESULTS, ph1, ph2, (int)(similarity * 100) + "%");
-                } catch (OHException ex) {
-                    Logger.getLogger(OHunterServer.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                System.out.println("--------------");
             }
             System.out.println("--------------");
         }
