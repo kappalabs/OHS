@@ -1,37 +1,32 @@
-
 package com.kappa_labs.ohunter.server.database;
 
 import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.net.OHException;
+import com.kappa_labs.ohunter.server.utils.SettingsManager;
 import java.sql.Timestamp;
 
 /**
  * Class providing operations in database.
  */
 public class DatabaseService {
-    
+
     private final Database database = Database.getInstance();
-    
-    /**
-     * Default starting score for every new player.
-     */
-    public static final int DEFAULT_SCORE = 100;
-    
+
     
     /**
      * Gets the list of few best players in the game.
-     * 
+     *
      * @param count The maximum number of best players.
      * @return The array of the best players.
      */
     public Player[] getBestPlayers(int count) {
         return database.getBestPlayers(count);
     }
-    
+
     /**
-     * Try to register a new player with given name and password.
-     * Return the Player object on success, otherwise throw OHException.
-     * 
+     * Try to register a new player with given name and password. Return the
+     * Player object on success, otherwise throw OHException.
+     *
      * @param nickname Nickname for this player.
      * @param password Password hash of this player.
      * @return Registered Player object.
@@ -46,42 +41,42 @@ public class DatabaseService {
             throw new OHException("Player with this nickname already exists. UID = " + euid,
                     OHException.EXType.DUPLICATE_USER);
         }
-        
-        int uid = database.createPlayer(nickname, DEFAULT_SCORE, password);
+
+        int uid = database.createPlayer(nickname, SettingsManager.getInitialScore(), password);
         if (uid == -1) {
             throw new OHException("Error when creating new player " + nickname + "!",
                     OHException.EXType.DATABASE_ERROR);
         }
-        Player newPlayer = new Player(uid, nickname, DEFAULT_SCORE);
-        
+        Player newPlayer = new Player(uid, nickname, SettingsManager.getInitialScore());
+
         return newPlayer;
     }
-    
+
     /**
      * Reset all parameters of the given Player in database to default values.
      * If the given player doesn't exist in the database, don't do anything.
-     * 
+     *
      * @param player The Player, whose parameters should be reset.
      * @throws OHException When exception in the database arises.
      */
     public void resetPlayer(Player player) throws OHException {
-        if (database.editPlayer(player.getUID(), player.getNickname(), DEFAULT_SCORE, null)) {
-            player.setScore(DEFAULT_SCORE);
+        if (database.editPlayer(player.getUID(), player.getNickname(), SettingsManager.getInitialScore(), null)) {
+            player.setScore(SettingsManager.getInitialScore());
         } else {
             throw new OHException("Error while editing player score!", OHException.EXType.DATABASE_ERROR);
         }
-        
+
     }
-    
+
     /**
-     * Checks if the nickname and given password exists in the database,
-     * then creates new Player object from retrieved information.
-     * 
+     * Checks if the nickname and given password exists in the database, then
+     * creates new Player object from retrieved information.
+     *
      * @param nickname Nickname of the player.
      * @param password Password hash of the player.
      * @return A new Player object representing the given player.
-     * @throws OHException When the password is wrong, player does not exist
-     *          or another error arises in the database.
+     * @throws OHException When the password is wrong, player does not exist or
+     * another error arises in the database.
      */
     public Player loginPlayer(String nickname, String password) throws OHException {
         int uid = database.getPlayerID(nickname, password, true);
@@ -100,29 +95,29 @@ public class DatabaseService {
             throw new OHException("Wrong password!",
                     OHException.EXType.INCORRECT_PASSWORD);
         }
-        
+
         int score = database.getPlayerScore(uid);
         if (score == -1) {
             throw new OHException("Score cannot be retrieved!",
                     OHException.EXType.DATABASE_ERROR);
         }
-        
+
         return new Player(uid, nickname, score);
     }
-    
+
     /**
      * Update values of the given player in the database to his current values.
-     * In the database, Player is identified by his UID.
-     * If the Player is not in the database, no operation is performed.
-     * 
+     * In the database, Player is identified by his UID. If the Player is not in
+     * the database, no operation is performed.
+     *
      * @param player The Player to be updated in the database.
      * @throws OHException When player information cannot be updated.
      */
     public void updatePlayer(Player player) throws OHException {
         int uid = database.getPlayerID(player.getNickname(), null, false);
         if (uid == -1) {
-                throw new OHException("Error while finding player in DB!",
-                        OHException.EXType.DATABASE_ERROR);
+            throw new OHException("Error while finding player in DB!",
+                    OHException.EXType.DATABASE_ERROR);
         }
         if (uid != -2) {
             if (!database.editPlayer(player.getUID(), player.getNickname(), player.getScore(), null)) {
@@ -130,15 +125,16 @@ public class DatabaseService {
             }
         }
     }
-    
+
     /**
-     * Change password for given player in the database.
-     * In the database, Player is identified by his UID.
-     * 
+     * Change password for given player in the database. In the database, Player
+     * is identified by his UID.
+     *
      * @param player The Player, who wants to change the password.
      * @param oldPassword The current password for given player.
      * @param newPassword The new password for given player.
-     * @throws OHException When the player does not exist or the old password is wrong.
+     * @throws OHException When the player does not exist or the old password is
+     * wrong.
      */
     public void changePassword(Player player, String oldPassword, String newPassword) throws OHException {
         int uid = database.getPlayerID(player.getNickname(), oldPassword, true);
@@ -157,18 +153,18 @@ public class DatabaseService {
             throw new OHException("Wrong old password!",
                     OHException.EXType.INCORRECT_PASSWORD);
         }
-        
+
         if (!database.editPlayer(player.getUID(), player.getNickname(),
                 player.getScore(), newPassword)) {
             throw new OHException("Error while changing the password!",
                     OHException.EXType.DATABASE_ERROR);
         }
     }
-    
+
     /**
-     * Remove given Player from the database records.
-     * In database, Player is identified by his UID.
-     * 
+     * Remove given Player from the database records. In database, Player is
+     * identified by his UID.
+     *
      * @param player The Player to be removed from database records.
      * @throws OHException When given player is not in the database.
      */
@@ -181,19 +177,20 @@ public class DatabaseService {
             throw new OHException("Given Player does not exist!",
                     OHException.EXType.INCORRECT_USER);
         }
-        
+
         if (!database.removePlayer(uid)) {
             throw new OHException("Error while removing player from DB!",
                     OHException.EXType.DATABASE_ERROR);
         }
     }
-    
+
     /**
      * Add new completed place to database for given player.
-     * 
+     *
      * @param player Who completed the place.
      * @param placeID Place unique identifier.
-     * @param photoReference Photo reference, from Google Places, of the image that was photographed.
+     * @param photoReference Photo reference, from Google Places, of the image
+     * that was photographed.
      * @param timestamp Timestamp of the time, when the place was completed.
      * @param discoveryGain Number of points given for finding the target.
      * @param similarityGain Number of points given for photo similarity.
@@ -205,10 +202,10 @@ public class DatabaseService {
             throw new OHException("Error while adding to completed!", OHException.EXType.DATABASE_ERROR);
         }
     }
-    
+
     /**
      * Check if the given player has the place among his completed ones.
-     * 
+     *
      * @param player The player, who should be checked.
      * @param placeKey The place, which should be checked.
      * @return True if the place is completed by this player, false if not.
@@ -223,10 +220,10 @@ public class DatabaseService {
         }
         throw new OHException("Cannot check, database error!", OHException.EXType.DATABASE_ERROR);
     }
-    
+
     /**
      * Add new rejected place to database for given player.
-     * 
+     *
      * @param player Who is rejecting the place.
      * @param placeKey Place unique identifier.
      * @throws OHException When rejected place cannot be add to database.
@@ -236,10 +233,10 @@ public class DatabaseService {
             throw new OHException("Error while adding to rejected", OHException.EXType.DATABASE_ERROR);
         }
     }
-    
+
     /**
      * Check if the given player has the place among his rejected ones.
-     * 
+     *
      * @param player The player, who should be checked.
      * @param placeKey The place, which should be checked.
      * @return True if the place is rejected by this player, false if not.
@@ -254,22 +251,22 @@ public class DatabaseService {
         }
         throw new OHException("Cannot check, database error!", OHException.EXType.DATABASE_ERROR);
     }
-    
+
     /**
      * Add new place to be blocked into the database.
-     * 
+     *
      * @param placeKey Place unique identifier.
      * @throws OHException When the new record cannot be add to database.
      */
     public void blockPlace(String placeKey) throws OHException {
         if (!database.addBlocked(placeKey)) {
-            throw new OHException("Error while adding toblocked! ("+placeKey+")", OHException.EXType.DATABASE_ERROR);
+            throw new OHException("Error while adding toblocked! (" + placeKey + ")", OHException.EXType.DATABASE_ERROR);
         }
     }
-    
+
     /**
      * Check if the given place is blocked.
-     * 
+     *
      * @param placeKey The place, which should be checked.
      * @return True if the place is blocked, false if not.
      * @throws OHException When error arises in the database.
@@ -283,5 +280,5 @@ public class DatabaseService {
         }
         throw new OHException("Cannot check, database error!", OHException.EXType.DATABASE_ERROR);
     }
-    
+
 }

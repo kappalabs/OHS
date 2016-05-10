@@ -9,20 +9,20 @@ import com.kappa_labs.ohunter.server.entities.Segment;
 import com.kappa_labs.ohunter.server.entities.Vector;
 import com.kappa_labs.ohunter.server.utils.Addterator;
 import com.kappa_labs.ohunter.server.utils.CIELab;
+import com.kappa_labs.ohunter.server.utils.SettingsManager;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.Random;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Class providing a method for measuring the similarity of two given images.
  */
 public class Analyzer {
 
-    public static final int DEFAULT_NUM_SAMPLES = 128;
-    public static final int DEFAULT_NIGHT_THRESHOLD = 80;
-    public static final int OPTIMAL_WIDTH = 256;
-    public static final int OPTIMAL_HEIGHT = OPTIMAL_WIDTH;
+    private static final Logger LOGGER = Logger.getLogger(Analyzer.class.getName());
 
     
     private Analyzer() {
@@ -49,7 +49,7 @@ public class Analyzer {
             ((SImage) ph1.sImage).setImage(resize(((SImage) ph1._sImage).toBufferedImage()));
             ((SImage) ph2.sImage).setImage(resize(((SImage) ph2._sImage).toBufferedImage()));
         } catch (Exception e) {
-            System.err.println("Could not acquire photos from client: " + e);
+            LOGGER.log(Level.WARNING, "Could not acquire photos from client: {0}", e);
             throw new OHException("Could not acquire photos!", OHException.EXType.OTHER);
         }
 
@@ -60,19 +60,18 @@ public class Analyzer {
             /* Perform segmentation */
             Segment[] segs1 = Segmenter.segment(ph1);
             Segment[] segs2 = Segmenter.segment(ph2);
-            System.out.println("... mam " + segs1.length + " prvnich a " + segs2.length + " druhych");
+            LOGGER.log(Level.FINER, "... got {0} segments from first and {1} segments"
+                    + " in the second photo", new Object[]{segs1.length, segs2.length});
 
             /* Create new Problem from given counted segments */
             Problem problem = new Problem();
             prepareDistribution(problem, segs1, ph1, true);
             prepareDistribution(problem, segs2, ph2, false);
 
-            //        System.out.println("LP:\n"+problem.toMathProg());
-
             /* Solve the EMP linear problem and return the final result */
             EMDSolver empm = new EMDSolver(problem);
             float act = Math.max(0f, Math.min(1f, (float) empm.countValue()));
-            System.out.println(String.format(" - similarity: %.1f%%", 100 - act * 100));
+            LOGGER.finer(String.format(" - similarity: %.1f%%", 100 - act * 100));
             ret += act;
         }
         ret /= poc;
@@ -89,8 +88,8 @@ public class Analyzer {
      */
     public static BufferedImage resize(BufferedImage image) {
         double divider = Math.max(
-                (double) image.getWidth() / OPTIMAL_WIDTH,
-                (double) image.getHeight() / OPTIMAL_HEIGHT);
+                (double) image.getWidth() / SettingsManager.getOptimalWidth(),
+                (double) image.getHeight() / SettingsManager.getOptimalHeight());
         return resize(image, (int) (image.getWidth() / divider), (int) (image.getHeight() / divider));
     }
 
@@ -118,7 +117,6 @@ public class Analyzer {
 
     private static void prepareDistribution(Problem problem, Segment[] segments, Photo photo, boolean isFirst) {
         int area = photo.getWidth() * photo.getHeight();
-        int max_dimension = Math.max(photo.getWidth(), photo.getHeight());
         for (Segment seg : segments) {
             DistrPair dp = new DistrPair();
 //            dp.weight = (double)seg.getSumPixels() / area;
@@ -174,13 +172,13 @@ public class Analyzer {
         Random rand = new Random();
         int x, y;
         double souc = 0;
-        for (int i = 0; i < DEFAULT_NUM_SAMPLES; i++) {
+        for (int i = 0; i < SettingsManager.getRandomPhotoSamplesNumber(); i++) {
             x = rand.nextInt(img.getWidth());
             y = rand.nextInt(img.getHeight());
             souc += argbToIntensity(img.getRGB(x, y));
         }
-        double val = (souc / DEFAULT_NUM_SAMPLES);
-        return val < DEFAULT_NIGHT_THRESHOLD;
+        double val = (souc / SettingsManager.getRandomPhotoSamplesNumber());
+        return val < SettingsManager.getNightTreshold();
     }
 
     /**

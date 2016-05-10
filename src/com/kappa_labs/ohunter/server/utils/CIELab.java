@@ -1,4 +1,3 @@
-
 package com.kappa_labs.ohunter.server.utils;
 
 import java.awt.color.ColorSpace;
@@ -8,15 +7,16 @@ import java.awt.color.ColorSpace;
  */
 public class CIELab extends ColorSpace {
 
-    private static final ColorSpace CIEXYZ =
-        ColorSpace.getInstance(ColorSpace.CS_CIEXYZ);
+    private static final ColorSpace CIEXYZ
+            = ColorSpace.getInstance(ColorSpace.CS_CIEXYZ);
 
     private static final double N = 4. / 29.;
 
+    
     public static CIELab getInstance() {
         return Holder.INSTANCE;
     }
-    
+
     private CIELab() {
         super(ColorSpace.TYPE_Lab, 3);
     }
@@ -27,7 +27,7 @@ public class CIELab extends ColorSpace {
         double L = 116.0 * l - 16.0;
         double a = 500.0 * (f(colorvalue[0]) - l);
         double b = 200.0 * (l - f(colorvalue[2]));
-        return new float[] {(float) L, (float) a, (float) b};
+        return new float[]{(float) L, (float) a, (float) b};
     }
 
     @Override
@@ -43,8 +43,8 @@ public class CIELab extends ColorSpace {
 
     @Override
     public float getMinValue(int component) {
-        return (component == 0)? 0f: -128f;
-    }    
+        return (component == 0) ? 0f : -128f;
+    }
 
     @Override
     public String getName(int idx) {
@@ -57,7 +57,7 @@ public class CIELab extends ColorSpace {
         double X = fInv(i + colorvalue[1] * (1.0 / 500.0));
         double Y = fInv(i);
         double Z = fInv(i - colorvalue[2] * (1.0 / 200.0));
-        return new float[] {(float) X, (float) Y, (float) Z};
+        return new float[]{(float) X, (float) Y, (float) Z};
     }
 
     @Override
@@ -76,7 +76,7 @@ public class CIELab extends ColorSpace {
 
     private static double fInv(double x) {
         if (x > 6.0 / 29.0) {
-            return x*x*x;
+            return x * x * x;
         } else {
             return (108.0 / 841.0) * (x - N);
         }
@@ -87,6 +87,7 @@ public class CIELab extends ColorSpace {
     }
 
     private static class Holder {
+
         static final CIELab INSTANCE = new CIELab();
     }
 

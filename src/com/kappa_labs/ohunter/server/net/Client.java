@@ -1,4 +1,3 @@
-
 package com.kappa_labs.ohunter.server.net;
 
 import com.kappa_labs.ohunter.lib.entities.Photo;
@@ -16,36 +15,32 @@ import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
 /**
  * For testing purposes only.
  */
 public class Client {
 
     public static String objFile = "response.obj";
-    
+
     private final String address;
     private final int port;
-    
+
     
     public Client(Server server) {
         this.address = server.getAddress();
         this.port = server.getPort();
     }
-    
+
     public Client(String address, int port) {
         this.address = address;
         this.port = port;
     }
-    
+
     public void connect() {
         try {
-            System.out.println("Pred new socketem");
             Socket server = new Socket(address, port);
             try {
-                System.out.println("Pred oos");
                 ObjectOutputStream oos = new ObjectOutputStream(server.getOutputStream());
-                System.out.println("Data na server");
                 Request request;
                 Player p = new Player(1, "nick", 4242);
 //                request = new RegisterRequest("locNick", "locPasswd");
@@ -54,41 +49,40 @@ public class Client {
 //                request = new UpdatePlayerRequest(p);
                 oos.writeObject(request);
                 oos.flush();
-                System.out.println("Data OK odeslana");
-                
-                System.out.println("Pred ois");
+                System.out.println("Data sended...");
+
                 ObjectInputStream ois = new ObjectInputStream(server.getInputStream());
                 Object obj = ois.readObject();
                 /* Serializace objektu */
                 ObjectOutputStream ooss = new ObjectOutputStream(new FileOutputStream(objFile));
                 ooss.writeObject(obj);
                 ooss.close();
-                System.out.println("Data serializovana do cache OK.");
+                System.out.println("Data succesfully serialized.");
                 /* Test prijateho Response */
                 try {
                     Response resp = (Response) obj;
                     if (resp.places != null) {
-                        System.out.println("mam "+resp.places.length+" mist");
+                        System.out.println("Got " + resp.places.length + " places.");
                         for (Place place : resp.places) {
                             System.out.println(place);
                         }
                     }
                     if (resp.player != null) {
-                        System.out.println("mam hrace: "+resp.player);
+                        System.out.println("Got player: " + resp.player);
                     }
                     if (resp.similarity != Float.NaN) {
-                        System.out.println("mam similarity: "+resp.similarity);
+                        System.out.println("Got similarity: " + resp.similarity);
                     }
                 } catch (ClassCastException ex) {
                     if (obj instanceof OHException) {
-                        System.err.println("VYpadla mi OHExceptiona: "+obj);
+                        System.err.println("Got OHException: " + obj);
                     } else {
-                        System.err.println("Server posila neznamy format tridy");
+                        System.err.println("Server sended unknown type of class.");
                     }
                 }
                 oos.close();
                 ois.close();
-//                        Response resp = (Response)ois.readObject();
+//                Response resp = (Response)ois.readObject();
                 server.close();
             } catch (IOException | ClassNotFoundException e) {
                 Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, e);
@@ -97,11 +91,11 @@ public class Client {
             Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
+
     public static void main(String[] args) {
         Server server = new Server();
         server.runServer();
-        
+
         Client client = new Client(server);
         System.out.println("Working Directory = " + System.getProperty("user.dir"));
         client.connect();

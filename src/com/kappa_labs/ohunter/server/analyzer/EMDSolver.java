@@ -1,4 +1,3 @@
-
 package com.kappa_labs.ohunter.server.analyzer;
 
 import com.kappa_labs.ohunter.server.entities.Problem;
@@ -12,35 +11,30 @@ import scpsolver.lpsolver.SolverFactory;
 import scpsolver.problems.LPSolution;
 import scpsolver.problems.LinearProgram;
 
-
 /**
  * Class performing the EMP by solving the given Problem.
- * 
- * TODO: use own implementation of modified simplex algorithm as described
- * for example here: http://www.vision.ucla.edu/~hbling/publication/emd_pami_O.pdf
- * or use different software as Java library.
  */
 public class EMDSolver {
-    
+
     public static final String LP_FILE_NAME = "lp_data.mod";
     public static final String LP_LOG_FILE_NAME = "lp_scps.log";
-    
+
     private final Problem problem;
     private static LinearProgramSolver solver;
 
     
     /**
      * Create new EMPMatch and initialize its Problem, which is LP to be solved.
-     * 
+     *
      * @param problem LP to be solved by this class.
      */
     public EMDSolver(Problem problem) {
         this.problem = problem;
     }
-    
+
     /**
      * Solve assigned Problem and return the result EMD value.
-     * 
+     *
      * @return The result optimal EMD value.
      */
     public double countValue() {
@@ -55,7 +49,7 @@ public class EMDSolver {
         } catch (FileNotFoundException ex) {
             Logger.getLogger(EMDSolver.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+
         /* Create the linear program and find its solution */
         LinearProgram lp = problem.toLinearProgram();
         if (solver == null) {
@@ -63,14 +57,14 @@ public class EMDSolver {
         }
         double[] sol = solver.solve(lp);
         LPSolution lps = new LPSolution(sol, lp);
-        
+
         /* Redirect the output stream back */
         System.setOut(out_);
         if (ps != null) {
             ps.close();
         }
-        
+
         return lps.getObjectiveValue();
     }
-    
+
 }

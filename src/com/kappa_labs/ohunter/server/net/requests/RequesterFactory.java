@@ -34,7 +34,8 @@ public class RequesterFactory {
         return new Request() {
             @Override
             public Response execute() throws OHException {
-                System.err.println("Wrong implementation of the class " + rpkg.getClass().getName() + " on the server!");
+                Logger.getLogger(RequesterFactory.class.getName()).log(Level.WARNING,
+                        "Wrong implementation of the class {0} on the server!", rpkg.getClass().getName());
                 return null;
             }
         };

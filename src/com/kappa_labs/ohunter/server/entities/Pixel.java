@@ -1,13 +1,15 @@
-
 package com.kappa_labs.ohunter.server.entities;
-
 
 /**
  * Class representing one pixel in image. The color model used here is CIELab.
  * It also contains fields helpful for the computation of K-Means algorithm.
  */
 public class Pixel {
-    
+
+    /**
+     * Special value which should be assigned if the centroid for this pixel is
+     * unknown.
+     */
     public static final int UNKNOWN_CENTROID = -1;
 
     /**
@@ -26,12 +28,12 @@ public class Pixel {
      * Index of the closest mean pixel.
      */
     public int centroid = UNKNOWN_CENTROID;
-    
+
     
     /**
-     * Create new pixel with given CIELab color elements, the position is 
+     * Create new pixel with given CIELab color elements, the position is
      * initialized to (0;0).
-     * 
+     *
      * @param h Lightness in CIELab model.
      * @param s Red-green in CIELab model.
      * @param v Yellow-blue in CIELab model.
@@ -40,15 +42,15 @@ public class Pixel {
         this.h = h;
         this.s = s;
         this.v = v;
-        
+
         this.x = 0;
         this.y = 0;
     }
-    
+
     /**
-     * Create new pixel with given HSV color elements, the position is 
+     * Create new pixel with given HSV color elements, the position is
      * initialized to given values.
-     * 
+     *
      * @param hsv HSV elements.
      * @param x The x coordinate of the pixel.
      * @param y The y coordinate of the pixel.
@@ -57,32 +59,32 @@ public class Pixel {
         this.h = hsv[0];
         this.s = hsv[1];
         this.v = hsv[2];
-        
+
         this.x = x;
         this.y = y;
     }
-    
+
     /**
      * Create a deep copy of given Pixel.
-     * 
+     *
      * @param pixel The Pixel to be copied.
      */
     public Pixel(Pixel pixel) {
         this.h = pixel.h;
         this.s = pixel.s;
         this.v = pixel.v;
-        
+
         this.x = pixel.x;
         this.y = pixel.y;
-        
+
         this.centroid = pixel.centroid;
         this.distance = pixel.distance;
     }
-    
+
     /**
-     * Get i-th color element of this pixel.
-     * 0 is Hue, 1 is Saturation, 2 is Value, otherwise return NaN.
-     * 
+     * Get i-th color element of this pixel. 0 is Hue, 1 is Saturation, 2 is
+     * Value, otherwise return NaN.
+     *
      * @param index Index of the color element to return.
      * @return The color element accordingly to given index.
      */
@@ -98,12 +100,13 @@ public class Pixel {
                 return Float.NaN;
         }
     }
-    
+
     /**
      * Count distance to another given pixel. This distance is uded in K-Means.
      * Because areas in the picture should be coherent, the distance also takes
-     * into account the distance between coordinates, not just the color distance.
-     * 
+     * into account the distance between coordinates, not just the color
+     * distance.
+     *
      * @param second The pixel, to which the distance is counted to.
      * @return The distance measured by color and space difference.
      */
@@ -111,15 +114,15 @@ public class Pixel {
 //        /* NOTE: pro HSV model */
 //        return 0.00000001 + Math.sqrt(.0000005*Math.pow(second.x - this.x, 2) + .0000005*Math.pow(second.y - this.y, 2) +
 //                .333333*Math.pow(second.h - this.h, 2) + .333333*Math.pow(second.s - this.s, 2) + .333333*Math.pow(second.v - this.v, 2));
-        
+
         return Math.sqrt(Math.pow(second.h - this.h, 2)
-                + Math.pow(second.s - this.s, 2)  + Math.pow(second.v - this.v, 2));
+                + Math.pow(second.s - this.s, 2) + Math.pow(second.v - this.v, 2));
     }
-    
+
     /**
-     * Performs an addition with given pixel (color and location). This pixel
-     * is modified and returned.
-     * 
+     * Performs an addition with given pixel (color and location). This pixel is
+     * modified and returned.
+     *
      * @param adder The pixel, whose elements should be added.
      * @return This modified pixel.
      */
@@ -127,17 +130,17 @@ public class Pixel {
         h += adder.h;
         s += adder.s;
         v += adder.v;
-        
+
         x += adder.x;
         y += adder.y;
-        
+
         return this;
     }
-    
+
     /**
      * Performs a division with given pixel (color and location) on every
      * element separately. This pixel is modified and returned.
-     * 
+     *
      * @param divider The pixel, whose elements will divide this pixel
      * @return This modified pixel.
      */
@@ -145,10 +148,10 @@ public class Pixel {
         h /= divider;
         s /= divider;
         v /= divider;
-        
+
         x /= divider;
         y /= divider;
-        
+
         return this;
     }
 
@@ -157,5 +160,5 @@ public class Pixel {
         return "Pixel: [h,s,v] = " + String.format("[%.2f, %.2f, %.2f]; ", h, s, v)
                 + String.format("{dist}, (centr) = {%.2f}, (%d)", distance, centroid);
     }
-    
+
 }

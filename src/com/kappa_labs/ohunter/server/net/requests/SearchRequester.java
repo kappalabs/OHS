@@ -10,6 +10,7 @@ import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.SearchRequest;
 import static com.kappa_labs.ohunter.server.net.requests.RadarSearchRequester.TYPES;
 import com.kappa_labs.ohunter.server.utils.PlaceFiller;
+import com.kappa_labs.ohunter.server.utils.SettingsManager;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -23,18 +24,6 @@ import java.util.logging.Logger;
 public class SearchRequester extends SearchRequest {
 
     /**
-     * Number of minutes to wait for thread termination.
-     */
-    private final int MAX_WAIT_TIME = 1;
-    /**
-     * Number of threads allowed for PlaceFiller thread pool.
-     */
-    private static final int NUM_FILLER_THREADS = 256;
-    /**
-     * Number of threads allowed to retrieve photos for each place.
-     */
-    private static final int NUM_PHOTO_THREADS = 10;
-    /**
      * Maximum number of places that will be send to the client.
      */
     private static final int MAX_PLACES = 30;
@@ -46,7 +35,8 @@ public class SearchRequester extends SearchRequest {
 
     @Override
     public Response execute() throws OHException {
-        System.out.println("SearchRequest on [" + latitude + "; " + longitude + "]; radius = " + radius);
+        Logger.getLogger(SearchRequester.class.getName()).log(Level.FINE,
+                "SearchRequest on [{0}; {1}]; radius = {2}", new Object[]{latitude, longitude, radius});
         /* Retrieve all possible places */
         List<Place> all_places;
         all_places = PlacesGetter.radarSearch(latitude, longitude, radius, "", TYPES);
@@ -73,13 +63,14 @@ public class SearchRequester extends SearchRequest {
 
         /* Parallel download of the Place Details and Photos */
         List<Place> places = new ArrayList<>();
-        ExecutorService executor = Executors.newFixedThreadPool(NUM_FILLER_THREADS);
+        ExecutorService executor = Executors.newFixedThreadPool(SettingsManager.getFillPoolFillerThreadsNumber());
         for (Place place : all_places) {
-            executor.execute(new PlaceFiller(place, places, width, height, daytime, NUM_PHOTO_THREADS));
+            executor.execute(new PlaceFiller(place, places, width, height,
+                    daytime, SettingsManager.getFillPoolPhotoThreadsNumber()));
         }
         executor.shutdown();
         try {
-            executor.awaitTermination(MAX_WAIT_TIME, TimeUnit.MINUTES);
+            executor.awaitTermination(SettingsManager.getFillPoolMaxWaitTime(), TimeUnit.MINUTES);
         } catch (InterruptedException ex) {
             Logger.getLogger(SearchRequester.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -88,7 +79,8 @@ public class SearchRequester extends SearchRequest {
         Response response = new Response(uid);
         response.places = places.toArray(new Place[0]);
 
-        System.out.println("SearchRequest: prepared " + places.size() + " Places.");
+        Logger.getLogger(SearchRequester.class.getName()).log(Level.FINE,
+                "SearchRequest: prepared {0} Places.", places.size());
 
         return response;
     }

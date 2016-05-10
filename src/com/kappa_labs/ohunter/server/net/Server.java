@@ -1,4 +1,3 @@
-
 package com.kappa_labs.ohunter.server.net;
 
 import com.kappa_labs.ohunter.lib.entities.Player;
@@ -8,6 +7,7 @@ import com.kappa_labs.ohunter.lib.net.Request;
 import com.kappa_labs.ohunter.server.database.Database;
 import com.kappa_labs.ohunter.server.net.requests.RequesterFactory;
 import com.kappa_labs.ohunter.server.net.requests.SearchRequester;
+import com.kappa_labs.ohunter.server.utils.SettingsManager;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InvalidClassException;
@@ -30,85 +30,83 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
 /**
  * Class providing the server actions, services for clients.
  */
 public class Server {
 
-    public static final int PORT = 4242;
-    public static final int NUM_THREADS = 8;
-    
+    private static final Logger LOGGER = Logger.getLogger(Server.class.getName());
+
     private String address;
     private int port;
-    
+
     private final boolean debugCache = false;
-    
+
     
     /**
      * Start the server, listen to clients and fulfill their requests.
      */
     public void runServer() {
         ServerSocket server = null;
-        ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS);
-        
+        ExecutorService executor = Executors.newFixedThreadPool(SettingsManager.getClientThreadsNumber());
+
         try {
             server = new ServerSocket();
             address = findServerIP();
-            port = PORT;
+            port = SettingsManager.getServerPort();
             SocketAddress addr = new InetSocketAddress(address, port);
             server.bind(addr);
-            System.out.println("name: "+addr.toString());
-        
+            System.out.println("Server name: " + addr.toString());
+
             ServerService ss = new ServerService(executor, server);
             Thread servThread = new Thread(ss);
             servThread.setDaemon(true);
             servThread.start();
-            
-            System.out.println("Jdu do smycky...");
-            while(true) {
+
+            LOGGER.finer("Going into the main loop...");
+            while (true) {
                 Socket client = server.accept();
                 try {
                     ObjectInputStream ois = new ObjectInputStream(client.getInputStream());
                     ObjectOutputStream oos = new ObjectOutputStream(client.getOutputStream());
-                    System.out.println("\nMam noveho klienta");
+                    LOGGER.fine("\nGot new client");
                     Request request = null;
                     try {
                         request = (Request) ois.readObject();
-                        System.out.println("Request info: "+request);
+                        LOGGER.log(Level.FINE, "Request info: {0}", request);
                     } catch (InvalidClassException icex) {
-                        System.err.println("Serializace je inkompatibilni!");
+                        LOGGER.warning("Serialization incompatible!");
                     }
                     request = RequesterFactory.buildRequester(request);
                     ClientWorker cw = new ClientWorker(request, oos, client);
                     executor.execute(cw);
-                    System.out.println("Request odeslan executoru");
+                    LOGGER.fine("Request sended to executor.");
                 } catch (IOException ex) {
                     System.err.println(ex);
-                    Logger.getLogger(Server.class.getName()).log(Level.WARNING, null, ex);
+                    LOGGER.log(Level.WARNING, null, ex);
                 }
             }
         } catch (ClassNotFoundException ex) {
-            Logger.getLogger(Server.class.getName()).log(Level.WARNING, null, ex);
+            LOGGER.log(Level.WARNING, null, ex);
         } catch (IOException ex) {
             /* Belongs to server.accept() */
             if (ex instanceof SocketException) {
                 /* OK, client closed */
                 return;
             }
-            Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         } finally {
             Database.getInstance().closeDatabase();
             if (server != null) {
                 try {
                     server.close();
                 } catch (IOException ex) {
-                    Logger.getLogger(Server.class.getName()).log(Level.WARNING, null, ex);
+                    LOGGER.log(Level.WARNING, null, ex);
                 }
             }
         }
     }
-    
+
     private String findServerIP() {
         try {
             Enumeration<NetworkInterface> n = NetworkInterface.getNetworkInterfaces();
@@ -116,19 +114,19 @@ public class Server {
             adds.add("custom");
             for (; n.hasMoreElements();) {
                 NetworkInterface e = n.nextElement();
-                
+
                 Enumeration<InetAddress> a = e.getInetAddresses();
                 for (; a.hasMoreElements();) {
                     InetAddress addr = a.nextElement();
                     adds.add(addr.getHostAddress());
                 }
             }
-            
+
             System.out.println("Available IPs:");
             for (int i = 0; i < adds.size(); i++) {
-                    System.out.println("[" + i + "] " + adds.get(i));
+                System.out.println("[" + i + "] " + adds.get(i));
             }
-            
+
             System.out.print("Choose server IP address index: ");
             Scanner sc = new Scanner(System.in);
             try {
@@ -144,14 +142,14 @@ public class Server {
                 System.err.println("Input must be integer!");
             }
         } catch (SocketException ex) {
-            Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
         return "localhost";
     }
 
     /**
      * Gets the current server address.
-     * 
+     *
      * @return The current server address.
      */
     public String getAddress() {
@@ -160,21 +158,20 @@ public class Server {
 
     /**
      * Gets the current server port.
-     * 
+     *
      * @return The current server port.
      */
     public int getPort() {
         return port;
     }
-    
+
     private class ServerService implements Runnable {
-        
+
         private final String PROMPT = "SS: ";
-        
+
         private final ExecutorService mExecutor;
         private final ServerSocket mServer;
 
-        
         public ServerService(ExecutorService mExecutor, ServerSocket mServer) {
             this.mExecutor = mExecutor;
             this.mServer = mServer;
@@ -182,9 +179,9 @@ public class Server {
 
         @Override
         public void run() {
-            System.out.println("running ServerService");
+            System.out.println("ServerService started running");
             Scanner sc = new Scanner(System.in);
-            
+
             String text;
             System.out.print(PROMPT);
             while ((text = sc.nextLine()) != null) {
@@ -227,7 +224,7 @@ public class Server {
                             break;
                         }
                         try {
-                        int playerID = Integer.parseInt(args[2]);
+                            int playerID = Integer.parseInt(args[2]);
                             switch (args[1].toLowerCase()) {
                                 case "remove":
                                     Database.getInstance().removePlayer(playerID);
@@ -274,28 +271,27 @@ public class Server {
                 System.out.print(PROMPT);
             }
         }
-        
+
         private void shutdown() {
             mExecutor.shutdown();
-            while(!mExecutor.isTerminated()) {
+            while (!mExecutor.isTerminated()) {
                 /* Wait for termination of all threads */
             }
             try {
                 mServer.close();
             } catch (IOException ex) {
-                Logger.getLogger(Server.class.getName()).log(Level.WARNING, null, ex);
+                LOGGER.log(Level.WARNING, null, ex);
             }
         }
-        
+
     }
-    
+
     private class ClientWorker implements Runnable {
-        
+
         private final Socket mClient;
         private final Request mRequest;
         private final ObjectOutputStream mOutput;
 
-        
         public ClientWorker(Request request, ObjectOutputStream outputStream, Socket client) {
             this.mRequest = request;
             this.mOutput = outputStream;
@@ -305,7 +301,7 @@ public class Server {
         @Override
         public void run() {
             try {
-                System.out.println("Request prijmut k provedeni");
+                LOGGER.fine("Request recieved by ClientWorker");
                 Response response;
                 if (debugCache && mRequest instanceof SearchRequester) {
                     ObjectInputStream ois = new ObjectInputStream(new FileInputStream(Client.objFile));
@@ -313,39 +309,37 @@ public class Server {
                 } else {
                     response = mRequest.execute();
                 }
-                System.out.println("request spocitan, odesilam...");
+                LOGGER.fine("Request counted sending back...");
                 if (response != null) {
-                    System.out.println("Response info: " + response);
-                    System.out.println("Vyrizovani trvalo cca "
-                            + String.format("%.2fs", (response.getTimestamp().getTime() - mRequest.getTimestamp().getTime()) / 1000.0));
+                    LOGGER.log(Level.FINE, "Response info: {0}", response);
+                    LOGGER.log(Level.FINE, "{0}Request counted in aproximately ", String.format("%.2fs", (response.getTimestamp().getTime() - mRequest.getTimestamp().getTime()) / 1000.0));
                 }
                 mOutput.writeObject(response);
-                System.out.println("response odeslan, klient obslouzen");
+                LOGGER.fine("Response sended to client");
             } catch (OHException ex) {
                 try {
-//                    Logger.getLogger(Server.class.getName()).log(Level.WARNING, null, ex);
-                    System.err.println(ex);
-                    System.out.println("Vypadla vyjimka!! odeslu ji...");
+                    LOGGER.log(Level.WARNING, null, ex);
+                    LOGGER.fine("Got a OHException, sending it to client.");
                     mOutput.writeObject(ex);
-                    System.out.println("Odeslano, klient obslouzen");
+                    LOGGER.fine("OHException sended to client.");
                 } catch (IOException ex1) {
-                    Logger.getLogger(Server.class.getName()).log(Level.WARNING, null, ex1);
+                    LOGGER.log(Level.WARNING, null, ex1);
                 }
             } catch (IOException ex) {
-                Logger.getLogger(Server.class.getName()).log(Level.WARNING, null, ex);
+                LOGGER.log(Level.WARNING, null, ex);
             } catch (ClassNotFoundException ex) {
-                Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+                LOGGER.log(Level.SEVERE, null, ex);
             } finally {
-                System.out.println("---------------------------");
+                LOGGER.fine("---------------------------");
                 try {
                     mOutput.close();
                     mClient.close();
                 } catch (IOException ex) {
-                    Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+                    LOGGER.log(Level.SEVERE, null, ex);
                 }
             }
         }
-        
+
     }
-    
+
 }

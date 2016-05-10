@@ -1,4 +1,3 @@
-
 package com.kappa_labs.ohunter.server.utils;
 
 import com.kappa_labs.ohunter.lib.entities.Photo;
@@ -13,35 +12,30 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
 /**
  * Worker class for filling up given Place object with information and photos.
  */
 public class PlaceFiller implements Runnable {
 
-    /**
-     * Number of minutes to wait for thread termination.
-     */
-    private final int MAX_WAIT_TIME = 1;
-    
     private final Place mPlace;
     private final List<Place> mPlaces;
     private final int width, height;
     private final Photo.DAYTIME daytime;
     private final int maxThreads;
 
-
+    
     /**
-     * Creates a new Place filler to fill the detail information and photos
-     * into given place. The result Place is added into the List only when no error
+     * Creates a new Place filler to fill the detail information and photos into
+     * given place. The result Place is added into the List only when no error
      * occures and at least one photo is available for that place.
-     * 
+     *
      * @param place The place whose details will be retrieved.
      * @param places The List, where the valid result should be placed.
      * @param width The maximum width of photos for given place.
      * @param height The maximum height of photos for given place.
      * @param daytime The preferred daytime of the photos.
-     * @param maxThreads The maximum number of threads to retrieve photos for each place.
+     * @param maxThreads The maximum number of threads to retrieve photos for
+     * each place.
      */
     public PlaceFiller(Place place, List<Place> places, int width, int height, Photo.DAYTIME daytime, int maxThreads) {
         this.mPlace = place;
@@ -58,30 +52,30 @@ public class PlaceFiller implements Runnable {
         if (photos == null) {
             return;
         }
-        
+
         /* Retrieve these photos */
-        ExecutorService executor = Executors.newFixedThreadPool(maxThreads);        
+        ExecutorService executor = Executors.newFixedThreadPool(maxThreads);
         photos.stream().forEach((photo) -> {
             executor.execute(new PhotosFiller(mPlace, photo, width, height, daytime));
         });
         executor.shutdown();
         try {
-            executor.awaitTermination(MAX_WAIT_TIME, TimeUnit.MINUTES);
+            executor.awaitTermination(SettingsManager.getFillPoolMaxWaitTime(), TimeUnit.MINUTES);
         } catch (InterruptedException ex) {
             Logger.getLogger(SearchRequester.class.getName()).log(Level.WARNING, null, ex);
         }
-        
+
         /* Add only places with some photos, other are of no use on the client */
         if (mPlace.getNumberOfPhotos() > 0) {
             mPlaces.add(mPlace);
         }
     }
-    
+
     /**
      * Worker class to retrieve one photo.
      */
     private class PhotosFiller implements Runnable {
-        
+
         private final Place place;
         private final Photo photo;
         private final int width, height;
@@ -89,7 +83,7 @@ public class PlaceFiller implements Runnable {
 
         /**
          * Creates a new worker to retrieve one photo and set its daytime.
-         * 
+         *
          * @param place The place whose photo this should be.
          * @param photo The photo object that will contain the retrieved photo.
          * @param width Maximum width of the photo.
@@ -127,7 +121,7 @@ public class PlaceFiller implements Runnable {
                 place.addPhoto(photo);
             }
         }
-    
+
     }
 
 }

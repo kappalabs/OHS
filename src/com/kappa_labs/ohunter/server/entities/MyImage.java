@@ -1,4 +1,3 @@
-
 package com.kappa_labs.ohunter.server.entities;
 
 import java.util.Iterator;
@@ -12,13 +11,20 @@ public class MyImage implements Iterable<Pixel> {
     /* Pattern: [column|x|j][row|y|i] */
     private Pixel[][] image;
     private Pixel[][] _image;
-    public int height, width;
+    /**
+     * Width of this image.
+     */
+    public int width;
+    /**
+     * Height of this image.
+     */
+    public int height;
 
     
     /**
-     * Creates a new MyImage object from Pixel array. The first dimension
-     * of the array must be width, the second height.
-     * 
+     * Creates a new MyImage object from Pixel array. The first dimension of the
+     * array must be width, the second height.
+     *
      * @param image Image specified by Pixel array.
      * @param width The size of the first dimension of the pixel array.
      * @param height The size of the second dimension of the pixel array.
@@ -28,10 +34,10 @@ public class MyImage implements Iterable<Pixel> {
         this.width = width;
         this.height = height;
     }
-    
+
     /**
      * Creates a new deep copy of given MyImage.
-     * 
+     *
      * @param myImage The MyImage to make deep copy of.
      */
     public MyImage(MyImage myImage) {
@@ -54,23 +60,23 @@ public class MyImage implements Iterable<Pixel> {
             }
         }
     }
-    
+
     /**
      * Gets a pixel from specific location. The location is not being checked.
-     * 
+     *
      * @param x The x coordinate of desired pixel.
      * @param y The y coordinate of desired pixel.
      * @return The pixel from required location.
      */
     public Pixel getPixel(int x, int y) {
-        assert (x >=0 && x < width && y >= 0 && y < height) : "Location is outside MyImage!";
+        assert (x >= 0 && x < width && y >= 0 && y < height) : "Location is outside MyImage!";
         return image[x][y];
     }
 
     /**
-     * Select a row, then iterate through its columns.
-     * Goes through each pixel in the image.
-     * 
+     * Select a row, then iterate through its columns. Goes through each pixel
+     * in the image.
+     *
      * @return Iterator, which can go through the whole image.
      */
     @Override
@@ -78,7 +84,7 @@ public class MyImage implements Iterable<Pixel> {
         return new Iterator<Pixel>() {
 
             int i = 0, j = 0;
-            
+
             @Override
             public boolean hasNext() {
                 tryNextRow();
@@ -90,7 +96,7 @@ public class MyImage implements Iterable<Pixel> {
                 tryNextRow();
                 return image[j++][i];
             }
-            
+
             private void tryNextRow() {
                 if (j == width) {
                     j = 0;
@@ -99,5 +105,5 @@ public class MyImage implements Iterable<Pixel> {
             }
         };
     }
-    
+
 }

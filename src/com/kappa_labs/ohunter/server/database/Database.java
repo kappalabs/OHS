@@ -2,6 +2,7 @@ package com.kappa_labs.ohunter.server.database;
 
 import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.server.utils.DBUtils;
+import com.kappa_labs.ohunter.server.utils.SettingsManager;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -20,15 +21,11 @@ import java.util.logging.Logger;
  */
 public class Database {
 
+    private static final Logger LOGGER = Logger.getLogger(Database.class.getName());
+
     private static final Database DATABASE;
 
     private static final String DRIVER = "org.apache.derby.jdbc.EmbeddedDriver";
-
-    private static final String DB_NAME = "oHunterDB";
-
-    private static final String URL = "jdbc:derby:" + Database.DB_NAME + ";create=true";
-    private static final String USER = "";
-    private static final String PASSWORD = "";
 
     public static final String TABLE_NAME_PLAYER = "HRAC";
     public static final String TABLE_NAME_REJECTED = "ZAMITNUTE";
@@ -55,7 +52,7 @@ public class Database {
         try {
             Class.forName(DRIVER);
         } catch (ClassNotFoundException ex) {
-            Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
     }
 
@@ -66,17 +63,18 @@ public class Database {
 
     /**
      * Gets the instance of this singleton class.
-     * 
+     *
      * @return The instance of this singleton class.
      */
     public static Database getInstance() {
         return DATABASE;
     }
 
+    /**
+     * Sets the location of the database.
+     */
     private static void setDBSystemDir() {
-        /* Decide on the db system directory: <userhome>/.<table-name>/ */
-        String userHomeDir = System.getProperty("user.home", ".");
-        String systemDir = userHomeDir + File.separator + "." + DB_NAME;
+        String systemDir = SettingsManager.getDatabaseLocation();
 
         /* Set the db system directory. */
         System.setProperty("derby.system.home", systemDir);
@@ -88,14 +86,16 @@ public class Database {
      */
     public void tryInitConnection() {
         if (connection == null) {
-            System.out.print("Initializing database connection...");
+            LOGGER.fine("Initializing database connection...");
 
+            String URL = "jdbc:derby:" + SettingsManager.getDatabaseName() + ";create=true";
             try {
-                connection = DriverManager.getConnection(URL, USER, PASSWORD);
+                connection = DriverManager.getConnection(URL,
+                        SettingsManager.getDatabaseUser(), SettingsManager.getDatabasePassword());
             } catch (SQLException ex) {
-                Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, ex);
+                LOGGER.log(Level.SEVERE, null, ex);
             }
-            System.out.println("... OK");
+            LOGGER.fine("... OK");
 
             createUnavailableTables(connection);
         }
@@ -110,7 +110,7 @@ public class Database {
             if (!res.next()) {
                 createPlayerTable(connection);
             } else {
-                System.out.println("table " + TABLE_NAME_PLAYER + " ready");
+                LOGGER.fine("table " + TABLE_NAME_PLAYER + " ready");
             }
             DBUtils.closeQuietly(res);
             /* Completed table */
@@ -118,7 +118,7 @@ public class Database {
             if (!res.next()) {
                 createCompletedTable(connection);
             } else {
-                System.out.println("table " + TABLE_NAME_COMPLETED + " ready");
+                LOGGER.fine("table " + TABLE_NAME_COMPLETED + " ready");
             }
             DBUtils.closeQuietly(res);
             /* Rejected table */
@@ -126,7 +126,7 @@ public class Database {
             if (!res.next()) {
                 createRejectedTable(connection);
             } else {
-                System.out.println("table " + TABLE_NAME_REJECTED + " ready");
+                LOGGER.fine("table " + TABLE_NAME_REJECTED + " ready");
             }
             DBUtils.closeQuietly(res);
             /* Blocked table */
@@ -134,11 +134,11 @@ public class Database {
             if (!res.next()) {
                 createBlockedTable(connection);
             } else {
-                System.out.println("table " + TABLE_NAME_BLOCKED + " ready");
+                LOGGER.fine("table " + TABLE_NAME_BLOCKED + " ready");
             }
             DBUtils.closeQuietly(res);
         } catch (SQLException ex) {
-            Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
     }
 
@@ -152,7 +152,7 @@ public class Database {
                 + TABLE_COLUMN_SCORE + " INTEGER, "
                 + TABLE_COLUMN_PASSWORD + " VARCHAR(64)"
                 + ")";
-        System.out.println("creating " + TABLE_NAME_PLAYER + " table");
+        LOGGER.fine("creating " + TABLE_NAME_PLAYER + " table");
         return execCreateTable(connection, sqlCreatePlayerTable);
     }
 
@@ -168,7 +168,7 @@ public class Database {
                 + TABLE_COLUMN_SIMILARITY + " INTEGER NOT NULL, "
                 + TABLE_COLUMN_HUNT_NUMBER + " INTEGER NOT NULL "
                 + ")";
-        System.out.println("creating " + TABLE_NAME_COMPLETED + " table");
+        LOGGER.fine("creating " + TABLE_NAME_COMPLETED + " table");
         return execCreateTable(connection, sqlCreateCompletedTable);
     }
 
@@ -178,7 +178,7 @@ public class Database {
                 + TABLE_COLUMN_PLAYER_ID + " INTEGER NOT NULL,"
                 + TABLE_COLUMN_PLACE_ID + " VARCHAR(64) NOT NULL "
                 + ")";
-        System.out.println("creating " + TABLE_NAME_REJECTED + " table");
+        LOGGER.fine("creating " + TABLE_NAME_REJECTED + " table");
         return execCreateTable(connection, createRejectedTableStatement);
     }
 
@@ -188,7 +188,7 @@ public class Database {
                 //                + TABLE_COLUMN_PHOTO_ID + " VARCHAR(64) NOT NULL "
                 + TABLE_COLUMN_PLACE_ID + " VARCHAR(64) NOT NULL "
                 + ")";
-        System.out.println("creating " + TABLE_NAME_BLOCKED + " table");
+        LOGGER.fine("creating " + TABLE_NAME_BLOCKED + " table");
         return execCreateTable(connection, createBlockedTableStatement);
     }
 
@@ -200,7 +200,7 @@ public class Database {
             stmtCreateTable.execute(command);
             bCreatedTables = true;
         } catch (SQLException ex) {
-            Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         } finally {
             DBUtils.closeQuietly(stmtCreateTable);
         }
@@ -209,7 +209,8 @@ public class Database {
     }
 
     /**
-     * Shows the whole content of table specified by its name.
+     * Shows the whole content of table specified by its name on the standard
+     * output.
      *
      * @param tableName The name of the table to show.
      */
@@ -239,7 +240,7 @@ public class Database {
             }
             System.out.println("---------");
         } catch (SQLException ex) {
-            Logger.getLogger(Database.class.getName()).log(Level.WARNING, null, ex);
+            LOGGER.log(Level.WARNING, null, ex);
             closeDatabase();
         } finally {
             DBUtils.closeQuietly(stmtWholeTable);
@@ -277,7 +278,7 @@ public class Database {
                 bestPlayers[position++] = new Player(-1, name, score);
             }
         } catch (SQLException ex) {
-            Logger.getLogger(Database.class.getName()).log(Level.WARNING, null, ex);
+            LOGGER.log(Level.WARNING, null, ex);
             closeDatabase();
         } finally {
             DBUtils.closeQuietly(stmtGetBests);
@@ -318,7 +319,7 @@ public class Database {
 
             removed = true;
         } catch (SQLException ex) {
-            Logger.getLogger(Database.class.getName()).log(Level.WARNING, null, ex);
+            LOGGER.log(Level.WARNING, null, ex);
             closeDatabase();
         } finally {
             DBUtils.closeQuietly(stmtRemovePlayer);
@@ -375,7 +376,7 @@ public class Database {
             stmtEditPlayer.executeUpdate();
             bEdited = true;
         } catch (SQLException ex) {
-            Logger.getLogger(Database.class.getName()).log(Level.WARNING, null, ex);
+            LOGGER.log(Level.WARNING, null, ex);
             closeDatabase();
         } finally {
             DBUtils.closeQuietly(stmtEditPlayer);
@@ -415,7 +416,7 @@ public class Database {
                 id = results.getInt(1);
             }
         } catch (SQLException ex) {
-            Logger.getLogger(Database.class.getName()).log(Level.WARNING, null, ex);
+            LOGGER.log(Level.WARNING, null, ex);
             closeDatabase();
         } finally {
             DBUtils.closeQuietly(results);
@@ -464,7 +465,7 @@ public class Database {
                 id = resultRow.getInt(1);
             }
         } catch (SQLException ex) {
-            Logger.getLogger(Database.class.getName()).log(Level.WARNING, null, ex);
+            LOGGER.log(Level.WARNING, null, ex);
             closeDatabase();
         } finally {
             DBUtils.closeQuietly(resultRow);
@@ -475,7 +476,7 @@ public class Database {
 
     /**
      * Retrieves the score of player with given player ID.
-     * 
+     *
      * @param id The players ID.
      * @return The score of specified player or -1 on fail.
      */
@@ -497,7 +498,7 @@ public class Database {
                 score = resultRow.getInt(1);
             }
         } catch (SQLException ex) {
-            Logger.getLogger(Database.class.getName()).log(Level.WARNING, null, ex);
+            LOGGER.log(Level.WARNING, null, ex);
             closeDatabase();
         } finally {
             DBUtils.closeQuietly(resultRow);
@@ -547,7 +548,7 @@ public class Database {
             stmtAddCompleted.executeUpdate();
             added = true;
         } catch (SQLException ex) {
-            Logger.getLogger(Database.class.getName()).log(Level.WARNING, null, ex);
+            LOGGER.log(Level.WARNING, null, ex);
             closeDatabase();
         } finally {
             DBUtils.closeQuietly(results);
@@ -584,7 +585,7 @@ public class Database {
                 ret = 1;
             }
         } catch (SQLException ex) {
-            Logger.getLogger(Database.class.getName()).log(Level.WARNING, null, ex);
+            LOGGER.log(Level.WARNING, null, ex);
             closeDatabase();
         } finally {
             DBUtils.closeQuietly(resultRow);
@@ -595,7 +596,7 @@ public class Database {
 
     /**
      * Adds a new record to table of rejected places/targets.
-     * 
+     *
      * @param playerID ID of the player who rejected the place ID.
      * @param placeID Place ID of the rejected place/target.
      * @return True on success, false on fail.
@@ -617,7 +618,7 @@ public class Database {
             stmtAddRrejected.executeUpdate();
             added = true;
         } catch (SQLException ex) {
-            Logger.getLogger(Database.class.getName()).log(Level.WARNING, null, ex);
+            LOGGER.log(Level.WARNING, null, ex);
             closeDatabase();
         } finally {
             DBUtils.closeQuietly(results);
@@ -654,7 +655,7 @@ public class Database {
                 id = 1;
             }
         } catch (SQLException ex) {
-            Logger.getLogger(Database.class.getName()).log(Level.WARNING, null, ex);
+            LOGGER.log(Level.WARNING, null, ex);
             closeDatabase();
         } finally {
             DBUtils.closeQuietly(resultRow);
@@ -665,7 +666,7 @@ public class Database {
 
     /**
      * Adds a new record to table of blocked places/targets.
-     * 
+     *
      * @param placeID Place ID of the blocked place/target.
      * @return True on success, false on fail.
      */
@@ -684,7 +685,7 @@ public class Database {
             stmtAddBlocked.executeUpdate();
             added = true;
         } catch (SQLException ex) {
-            Logger.getLogger(Database.class.getName()).log(Level.WARNING, null, ex);
+            LOGGER.log(Level.WARNING, null, ex);
             closeDatabase();
         } finally {
             DBUtils.closeQuietly(results);
@@ -719,7 +720,7 @@ public class Database {
                 id = 1;
             }
         } catch (SQLException ex) {
-            Logger.getLogger(Database.class.getName()).log(Level.WARNING, null, ex);
+            LOGGER.log(Level.WARNING, null, ex);
             closeDatabase();
         } finally {
             DBUtils.closeQuietly(resultRow);

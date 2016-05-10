@@ -8,6 +8,8 @@ import com.kappa_labs.ohunter.server.database.DatabaseService;
 import com.kappa_labs.ohunter.server.google_api.PlacesGetter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -28,7 +30,8 @@ public class RadarSearchRequester extends RadarSearchRequest {
 
     @Override
     public Response execute() throws OHException {
-        System.out.println("RadarSearchRequest on [" + latitude + "; " + longitude + "]; radius = " + radius);
+        Logger.getLogger(RadarSearchRequester.class.getName()).log(Level.FINE,
+                "RadarSearchRequest on [{0}; {1}]; radius = {2}", new Object[]{latitude, longitude, radius});
         /* Retrieve all possible places */
         List<Place> places = PlacesGetter.radarSearch(latitude, longitude, radius, "", TYPES);
 
@@ -49,7 +52,8 @@ public class RadarSearchRequester extends RadarSearchRequest {
         Response response = new Response(uid);
         response.places = places.toArray(new Place[0]);
 
-        System.out.println("RadarSearchRequest: prepared " + places.size() + " Places.");
+        Logger.getLogger(RadarSearchRequester.class.getName()).log(Level.FINE,
+                "Prepared {0} Places.", places.size());
 
         return response;
     }

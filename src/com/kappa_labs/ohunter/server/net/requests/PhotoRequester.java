@@ -5,6 +5,7 @@ import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.PhotoRequest;
 import com.kappa_labs.ohunter.server.google_api.PlacesGetter;
+import com.kappa_labs.ohunter.server.utils.SettingsManager;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -16,16 +17,6 @@ import java.util.logging.Logger;
  */
 public class PhotoRequester extends PhotoRequest {
 
-    /**
-     * Number of minutes to wait for thread termination.
-     */
-    private final int MAX_WAIT_TIME = 1;
-    /**
-     * Number of threads allowed to retrieve the photos.
-     */
-    private static final int NUM_PHOTO_THREADS = 10;
-
-
     public PhotoRequester(PhotoRequest request) {
         super(request);
     }
@@ -34,7 +25,7 @@ public class PhotoRequester extends PhotoRequest {
     public Response execute() throws OHException {
         /* Parallel download of the Photos */
         Photo[] photos = new Photo[photoReferences.length];
-        ExecutorService executor = Executors.newFixedThreadPool(NUM_PHOTO_THREADS);
+        ExecutorService executor = Executors.newFixedThreadPool(SettingsManager.getPhotoPoolThreadsNumber());
         for (int i = 0; i < photos.length; i++) {
             photos[i] = new Photo();
             photos[i].reference = photoReferences[i];
@@ -42,7 +33,7 @@ public class PhotoRequester extends PhotoRequest {
         }
         executor.shutdown();
         try {
-            executor.awaitTermination(MAX_WAIT_TIME, TimeUnit.MINUTES);
+            executor.awaitTermination(SettingsManager.getPhotoPoolMaxWaitTime(), TimeUnit.MINUTES);
         } catch (InterruptedException ex) {
             Logger.getLogger(SearchRequester.class.getName()).log(Level.WARNING, null, ex);
         }
