@@ -4,7 +4,7 @@ package com.kappa_labs.ohunter.server.net;
 import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.net.OHException;
-import com.kappa_labs.ohunter.lib.requests.Request;
+import com.kappa_labs.ohunter.lib.net.Request;
 import com.kappa_labs.ohunter.server.database.Database;
 import com.kappa_labs.ohunter.server.net.requests.RequesterFactory;
 import com.kappa_labs.ohunter.server.net.requests.SearchRequester;

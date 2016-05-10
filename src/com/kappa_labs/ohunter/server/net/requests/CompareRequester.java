@@ -1,7 +1,6 @@
 package com.kappa_labs.ohunter.server.net.requests;
 
 import com.kappa_labs.ohunter.lib.entities.Photo;
-import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.CompareRequest;
@@ -11,10 +10,6 @@ import com.kappa_labs.ohunter.server.analyzer.Analyzer;
  * Implementation of the CompareRequest from the OHL.
  */
 public class CompareRequester extends CompareRequest {
-
-    public CompareRequester(Player player, Photo referencPhoto, Photo[] similarPhotos) {
-        super(player, referencPhoto, similarPhotos);
-    }
 
     public CompareRequester(CompareRequest request) {
         super(request);

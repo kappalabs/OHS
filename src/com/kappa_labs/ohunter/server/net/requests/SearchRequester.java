@@ -2,9 +2,7 @@ package com.kappa_labs.ohunter.server.net.requests;
 
 import com.kappa_labs.ohunter.server.database.DatabaseService;
 import com.kappa_labs.ohunter.server.google_api.PlacesGetter;
-import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
-import com.kappa_labs.ohunter.lib.entities.Player;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 import com.kappa_labs.ohunter.lib.net.OHException;
@@ -42,11 +40,6 @@ public class SearchRequester extends SearchRequest {
     private static final int MAX_PLACES = 30;
 
     
-    public SearchRequester(Player player, double lat, double lng, int radius,
-            Photo.DAYTIME daytime, int width, int height) {
-        super(player, lat, lng, radius, daytime, width, height);
-    }
-
     public SearchRequester(SearchRequest request) {
         super(request);
     }

@@ -19,7 +19,7 @@ import java.util.Random;
  */
 public class Analyzer {
 
-    public static final int DEFAULT_NUM_SAMPLES = 78;
+    public static final int DEFAULT_NUM_SAMPLES = 128;
     public static final int DEFAULT_NIGHT_THRESHOLD = 80;
     public static final int OPTIMAL_WIDTH = 256;
     public static final int OPTIMAL_HEIGHT = OPTIMAL_WIDTH;
@@ -172,27 +172,28 @@ public class Analyzer {
     public static boolean isNight(Photo photo) {
         BufferedImage img = ((SImage) photo.sImage).toBufferedImage();
         Random rand = new Random();
-        int x, y, souc = 0;
+        int x, y;
+        double souc = 0;
         for (int i = 0; i < DEFAULT_NUM_SAMPLES; i++) {
             x = rand.nextInt(img.getWidth());
             y = rand.nextInt(img.getHeight());
-            souc += argbToByte(img.getRGB(x, y));
+            souc += argbToIntensity(img.getRGB(x, y));
         }
-        float val = (souc / DEFAULT_NUM_SAMPLES);
+        double val = (souc / DEFAULT_NUM_SAMPLES);
         return val < DEFAULT_NIGHT_THRESHOLD;
     }
 
     /**
-     * Convert argb 4-byte color value to one byte value.
+     * Convert argb 4-byte color value to intensity value.
      *
      * @param argb Input 4-byte value.
-     * @return
+     * @return The intensity of given color.
      */
-    private static int argbToByte(int argb) {
+    private static double argbToIntensity(int argb) {
         int ret = 0;
-        ret += (argb & 0xff) / 3;
-        ret += ((argb & 0xff00) >> 8) / 3;
-        ret += ((argb & 0xff0000) >> 16) / 3;
+        ret += (argb & 0xff) * 0.0722;
+        ret += ((argb & 0xff00) >> 8) * 0.7152;
+        ret += ((argb & 0xff0000) >> 16) * 0.226;
         return ret;
     }
 

@@ -30,18 +30,21 @@ public class Database {
     private static final String USER = "";
     private static final String PASSWORD = "";
 
-    public static final String TABLE_NAME_PLAYER    = "HRAC";
-    public static final String TABLE_NAME_REJECTED  = "ZAMITNUTE";
-    public static final String TABLE_NAME_BLOCKED   = "BLOKOVANE";
+    public static final String TABLE_NAME_PLAYER = "HRAC";
+    public static final String TABLE_NAME_REJECTED = "ZAMITNUTE";
+    public static final String TABLE_NAME_BLOCKED = "BLOKOVANE";
     public static final String TABLE_NAME_COMPLETED = "SPLNENE";
-    
-    private static final String TABLE_COLUMN_PLAYER_ID  = "ID_HRACE";
-    private static final String TABLE_COLUMN_NICKNAME   = "PREZDIVKA";
-    private static final String TABLE_COLUMN_SCORE      = "SKORE";
-    private static final String TABLE_COLUMN_PASSWORD   = "HESLO";
-    private static final String TABLE_COLUMN_PLACE_ID   = "ID_CILE";
-    private static final String TABLE_COLUMN_PHOTO_ID   = "ID_FOTO";
-    private static final String TABLE_COLUMN_TIMESTAMP  = "TIMESTAMP";
+
+    private static final String TABLE_COLUMN_PLAYER_ID = "ID_HRACE";
+    private static final String TABLE_COLUMN_NICKNAME = "PREZDIVKA";
+    private static final String TABLE_COLUMN_SCORE = "SKORE";
+    private static final String TABLE_COLUMN_PASSWORD = "HESLO";
+    private static final String TABLE_COLUMN_PLACE_ID = "ID_CILE";
+    private static final String TABLE_COLUMN_PHOTO_ID = "ID_FOTO";
+    private static final String TABLE_COLUMN_TIMESTAMP = "TIMESTAMP";
+    private static final String TABLE_COLUMN_DISCOVERY = "OBJEVENI";
+    private static final String TABLE_COLUMN_SIMILARITY = "PODOBNOST";
+    private static final String TABLE_COLUMN_HUNT_NUMBER = "LOV";
 
     private Connection connection;
 
@@ -57,7 +60,18 @@ public class Database {
     }
 
     
-    private Database() { /* Singleton class */ }
+    private Database() {
+        /* Singleton class */
+    }
+
+    /**
+     * Gets the instance of this singleton class.
+     * 
+     * @return The instance of this singleton class.
+     */
+    public static Database getInstance() {
+        return DATABASE;
+    }
 
     private static void setDBSystemDir() {
         /* Decide on the db system directory: <userhome>/.<table-name>/ */
@@ -68,6 +82,10 @@ public class Database {
         System.setProperty("derby.system.home", systemDir);
     }
 
+    /**
+     * Tries to initialize the database (create its tables). Nothing is made if
+     * all the tables exist, otherwise nonexisting tables are created.
+     */
     public void tryInitConnection() {
         if (connection == null) {
             System.out.print("Initializing database connection...");
@@ -143,9 +161,12 @@ public class Database {
                 = "CREATE TABLE " + TABLE_NAME_COMPLETED + " ( "
                 + TABLE_COLUMN_PLAYER_ID + " INTEGER NOT NULL,"
                 + TABLE_COLUMN_PLACE_ID + " VARCHAR(64) NOT NULL, "
-//                Google Places API unfortunately does not specify the maximum length of this value...
+                /* Google Places API unfortunately does not specify the maximum length of this value... */
                 + TABLE_COLUMN_PHOTO_ID + " VARCHAR(512) NOT NULL, "
-                + TABLE_COLUMN_TIMESTAMP + " TIMESTAMP NOT NULL "
+                + TABLE_COLUMN_TIMESTAMP + " TIMESTAMP NOT NULL, "
+                + TABLE_COLUMN_DISCOVERY + " INTEGER NOT NULL, "
+                + TABLE_COLUMN_SIMILARITY + " INTEGER NOT NULL, "
+                + TABLE_COLUMN_HUNT_NUMBER + " INTEGER NOT NULL "
                 + ")";
         System.out.println("creating " + TABLE_NAME_COMPLETED + " table");
         return execCreateTable(connection, sqlCreateCompletedTable);
@@ -164,7 +185,7 @@ public class Database {
     private static boolean createBlockedTable(Connection connection) {
         final String createBlockedTableStatement
                 = "CREATE TABLE " + TABLE_NAME_BLOCKED + " ( "
-//                + TABLE_COLUMN_PHOTO_ID + " VARCHAR(64) NOT NULL "
+                //                + TABLE_COLUMN_PHOTO_ID + " VARCHAR(64) NOT NULL "
                 + TABLE_COLUMN_PLACE_ID + " VARCHAR(64) NOT NULL "
                 + ")";
         System.out.println("creating " + TABLE_NAME_BLOCKED + " table");
@@ -187,6 +208,11 @@ public class Database {
         return bCreatedTables;
     }
 
+    /**
+     * Shows the whole content of table specified by its name.
+     *
+     * @param tableName The name of the table to show.
+     */
     public void showTable(String tableName) {
         /* Before doing anything, check (-> instantiate) the DB connector */
         tryInitConnection();
@@ -220,7 +246,14 @@ public class Database {
             DBUtils.closeQuietly(rsWholeTable);
         }
     }
-    
+
+    /**
+     * Gets the list of few best players ordered from the ones with best score
+     * to worst in the end.
+     *
+     * @param count Maximum number of best players to return.
+     * @return The list of best players ordered from best to worst.
+     */
     public Player[] getBestPlayers(int count) {
         /* Before doing anything, check (-> instantiate) the DB connector */
         tryInitConnection();
@@ -232,11 +265,11 @@ public class Database {
             /* Remove player from Player table */
             stmtGetBests = connection.prepareStatement(
                     "SELECT " + TABLE_COLUMN_NICKNAME + "," + TABLE_COLUMN_SCORE
-                            + " FROM " + TABLE_NAME_PLAYER
-                            + " ORDER BY " + TABLE_COLUMN_SCORE + " DESC"
-                            + " FETCH FIRST ? ROWS ONLY");
+                    + " FROM " + TABLE_NAME_PLAYER
+                    + " ORDER BY " + TABLE_COLUMN_SCORE + " DESC"
+                    + " FETCH FIRST ? ROWS ONLY");
             stmtGetBests.setInt(1, count);
-            
+
             ResultSet results = stmtGetBests.executeQuery();
             while (results.next()) {
                 String name = results.getString(TABLE_COLUMN_NICKNAME);
@@ -252,6 +285,12 @@ public class Database {
         return bestPlayers;
     }
 
+    /**
+     * Removes records of player with given ID from all tables in database.
+     *
+     * @param ID The unique player ID of the player to remove.
+     * @return True on success, false on fail.
+     */
     public boolean removePlayer(int ID) {
         /* Before doing anything, check (-> instantiate) the DB connector */
         tryInitConnection();
@@ -264,13 +303,13 @@ public class Database {
                     "DELETE FROM " + TABLE_NAME_PLAYER + " WHERE " + TABLE_COLUMN_PLAYER_ID + " = ?");
             stmtRemovePlayer.setInt(1, ID);
             stmtRemovePlayer.executeUpdate();
-            
+
             /* Remove Player's completed history */
             stmtRemovePlayer = connection.prepareStatement(
                     "DELETE FROM " + TABLE_NAME_COMPLETED + " WHERE " + TABLE_COLUMN_PLAYER_ID + " = ?");
             stmtRemovePlayer.setInt(1, ID);
             stmtRemovePlayer.executeUpdate();
-            
+
             /* Remove Player's rejected history */
             stmtRemovePlayer = connection.prepareStatement(
                     "DELETE FROM " + TABLE_NAME_REJECTED + " WHERE " + TABLE_COLUMN_PLAYER_ID + " = ?");
@@ -286,7 +325,7 @@ public class Database {
         }
         return removed;
     }
-    
+
     /**
      * Edits the player's data. Player must be specified by his ID, other fields
      * will be updated in the table. If the parameter is null, the appropriate
@@ -344,6 +383,14 @@ public class Database {
         return bEdited;
     }
 
+    /**
+     * Creates a record for a new player in the database.
+     *
+     * @param nickname Nickname of the new player.
+     * @param score Initial score of the new player.
+     * @param password The password hash of the new player.
+     * @return Player ID for the new player -1 on fail.
+     */
     protected int createPlayer(String nickname, int score, String password) {
         /* Before doing anything, check (-> instantiate) the DB connector */
         tryInitConnection();
@@ -376,27 +423,37 @@ public class Database {
         }
         return id;
     }
-    
+
+    /**
+     * Gets the player ID of player specified by his nickname.
+     *
+     * @param nickname Nickname of the player.
+     * @param password Password hash of the player.
+     * @param checkPassword Specifies if the password should be checked.
+     * @return Player ID of the player with given nickname, -2 if the nickname
+     * does not exist in database or when the password is incorrect (if
+     * checked), -1 if on fail
+     */
     protected int getPlayerID(String nickname, String password, boolean checkPassword) {
         /* Before doing anything, check (-> instantiate) the DB connector */
         tryInitConnection();
 
         int id = -1;
-        
+
         PreparedStatement stmtCreatePlayer = null;
         ResultSet resultRow = null;
         try {
             if (checkPassword) {
                 stmtCreatePlayer = connection.prepareStatement(
-                        "SELECT "+ TABLE_COLUMN_PLAYER_ID + "," + TABLE_COLUMN_NICKNAME + " "
+                        "SELECT " + TABLE_COLUMN_PLAYER_ID + "," + TABLE_COLUMN_NICKNAME + " "
                         + "FROM " + TABLE_NAME_PLAYER + " "
                         + "WHERE " + TABLE_COLUMN_NICKNAME + " = ? AND "
-                                + TABLE_COLUMN_PASSWORD + " = ?");
+                        + TABLE_COLUMN_PASSWORD + " = ?");
                 stmtCreatePlayer.setString(1, nickname);
                 stmtCreatePlayer.setString(2, password);
             } else {
                 stmtCreatePlayer = connection.prepareStatement(
-                        "SELECT "+ TABLE_COLUMN_PLAYER_ID + "," + TABLE_COLUMN_NICKNAME + " "
+                        "SELECT " + TABLE_COLUMN_PLAYER_ID + "," + TABLE_COLUMN_NICKNAME + " "
                         + "FROM " + TABLE_NAME_PLAYER + " "
                         + "WHERE " + TABLE_COLUMN_NICKNAME + " = ?");
                 stmtCreatePlayer.setString(1, nickname);
@@ -415,11 +472,17 @@ public class Database {
         }
         return id;
     }
-    
+
+    /**
+     * Retrieves the score of player with given player ID.
+     * 
+     * @param id The players ID.
+     * @return The score of specified player or -1 on fail.
+     */
     protected int getPlayerScore(int id) {
         /* Before doing anything, check (-> instantiate) the DB connector */
         tryInitConnection();
-        
+
         int score = -1;
         PreparedStatement stmtCreatePlayer = null;
         ResultSet resultRow = null;
@@ -442,11 +505,24 @@ public class Database {
         }
         return score;
     }
-    
-    protected boolean addCompleted(int playerID, String placeID, String photoReference, Timestamp timestamp) {
+
+    /**
+     * Add new completed place to database table.
+     *
+     * @param playerID ID of the player who completed the place.
+     * @param placeID Place unique identifier.
+     * @param photoReference Photo reference, from Google Places, of the image
+     * that was photographed.
+     * @param timestamp Timestamp of the time, when the place was completed.
+     * @param discoveryGain Number of points given for finding the target.
+     * @param similarityGain Number of points given for photo similarity.
+     * @param huntNumber The number of hunt, in which the target was completed.
+     * @return True if the record was written succesfully, false otherwise.
+     */
+    protected boolean addCompleted(int playerID, String placeID, String photoReference, Timestamp timestamp, int discoveryGain, int similarityGain, int huntNumber) {
         /* Before doing anything, check (-> instantiate) the DB connector */
         tryInitConnection();
-        
+
         boolean added = false;
         PreparedStatement stmtAddCompleted = null;
         ResultSet results = null;
@@ -454,14 +530,20 @@ public class Database {
             stmtAddCompleted = connection.prepareStatement(
                     "INSERT INTO " + TABLE_NAME_COMPLETED + " "
                     + "(" + TABLE_COLUMN_PLAYER_ID + ","
-                            + TABLE_COLUMN_PLACE_ID + ","
-                            + TABLE_COLUMN_PHOTO_ID + ","
-                            + TABLE_COLUMN_TIMESTAMP + ")"
-                    + "VALUES (?, ?, ?, ?)");
+                    + TABLE_COLUMN_PLACE_ID + ","
+                    + TABLE_COLUMN_PHOTO_ID + ","
+                    + TABLE_COLUMN_TIMESTAMP + ","
+                    + TABLE_COLUMN_DISCOVERY + ","
+                    + TABLE_COLUMN_SIMILARITY + ","
+                    + TABLE_COLUMN_HUNT_NUMBER + ")"
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?)");
             stmtAddCompleted.setInt(1, playerID);
             stmtAddCompleted.setString(2, placeID);
             stmtAddCompleted.setString(3, photoReference);
             stmtAddCompleted.setTimestamp(4, timestamp);
+            stmtAddCompleted.setInt(5, discoveryGain);
+            stmtAddCompleted.setInt(6, similarityGain);
+            stmtAddCompleted.setInt(7, huntNumber);
             stmtAddCompleted.executeUpdate();
             added = true;
         } catch (SQLException ex) {
@@ -473,10 +555,10 @@ public class Database {
         }
         return added;
     }
-    
+
     /**
      * Checks if the given pair exists in the database of completed places.
-     * 
+     *
      * @param playerID ID of the player to check.
      * @param placeID ID of the place to check.
      * @return Number -1 on error, 0 when record does not exist, 1 on success.
@@ -485,7 +567,7 @@ public class Database {
         /* Before doing anything, check (-> instantiate) the DB connector */
         tryInitConnection();
         int ret = -1;
-        
+
         PreparedStatement stmtCreatePlayer = null;
         ResultSet resultRow = null;
         try {
@@ -493,7 +575,7 @@ public class Database {
                     "SELECT * "
                     + "FROM " + TABLE_NAME_COMPLETED + " "
                     + "WHERE " + TABLE_COLUMN_PLAYER_ID + " = ? AND "
-                            + TABLE_COLUMN_PLACE_ID + " = ?");
+                    + TABLE_COLUMN_PLACE_ID + " = ?");
             stmtCreatePlayer.setInt(1, playerID);
             stmtCreatePlayer.setString(2, placeID);
             resultRow = stmtCreatePlayer.executeQuery();
@@ -510,11 +592,18 @@ public class Database {
         }
         return ret;
     }
-    
+
+    /**
+     * Adds a new record to table of rejected places/targets.
+     * 
+     * @param playerID ID of the player who rejected the place ID.
+     * @param placeID Place ID of the rejected place/target.
+     * @return True on success, false on fail.
+     */
     protected boolean addRejected(int playerID, String placeID) {
         /* Before doing anything, check (-> instantiate) the DB connector */
         tryInitConnection();
-        
+
         boolean added = false;
         PreparedStatement stmtAddRrejected = null;
         ResultSet results = null;
@@ -536,10 +625,10 @@ public class Database {
         }
         return added;
     }
-    
+
     /**
      * Checks if the given pair exists in the database of rejected places.
-     * 
+     *
      * @param playerID ID of the player to check.
      * @param placeID ID of the place to check.
      * @return Number -1 on error, 0 when record does not exist, 1 on success.
@@ -548,7 +637,7 @@ public class Database {
         /* Before doing anything, check (-> instantiate) the DB connector */
         tryInitConnection();
         int id = -1;
-        
+
         PreparedStatement stmtCreatePlayer = null;
         ResultSet resultRow = null;
         try {
@@ -556,7 +645,7 @@ public class Database {
                     "SELECT * "
                     + "FROM " + TABLE_NAME_REJECTED + " "
                     + "WHERE " + TABLE_COLUMN_PLAYER_ID + " = ? AND "
-                            + TABLE_COLUMN_PLACE_ID + " = ?");
+                    + TABLE_COLUMN_PLACE_ID + " = ?");
             stmtCreatePlayer.setInt(1, playerID);
             stmtCreatePlayer.setString(2, placeID);
             resultRow = stmtCreatePlayer.executeQuery();
@@ -573,18 +662,24 @@ public class Database {
         }
         return id;
     }
-    
+
+    /**
+     * Adds a new record to table of blocked places/targets.
+     * 
+     * @param placeID Place ID of the blocked place/target.
+     * @return True on success, false on fail.
+     */
     protected boolean addBlocked(String placeID) {
         /* Before doing anything, check (-> instantiate) the DB connector */
         tryInitConnection();
-        
+
         boolean added = false;
         PreparedStatement stmtAddBlocked = null;
         ResultSet results = null;
         try {
             stmtAddBlocked = connection.prepareStatement(
                     "INSERT INTO " + TABLE_NAME_BLOCKED + " "
-                    + "(" + TABLE_COLUMN_PLACE_ID+ ") VALUES (?)");
+                    + "(" + TABLE_COLUMN_PLACE_ID + ") VALUES (?)");
             stmtAddBlocked.setString(1, placeID);
             stmtAddBlocked.executeUpdate();
             added = true;
@@ -597,10 +692,10 @@ public class Database {
         }
         return added;
     }
-    
+
     /**
      * Checks if the given key exists in the database of blocked places.
-     * 
+     *
      * @param placeID ID of the place to check.
      * @return Number -1 on error, 0 when record does not exist, 1 on success.
      */
@@ -608,14 +703,14 @@ public class Database {
         /* Before doing anything, check (-> instantiate) the DB connector */
         tryInitConnection();
         int id = -1;
-        
+
         PreparedStatement stmtCreatePlayer = null;
         ResultSet resultRow = null;
         try {
             stmtCreatePlayer = connection.prepareStatement(
                     "SELECT * "
                     + "FROM " + TABLE_NAME_BLOCKED + " "
-//                    + "WHERE " + TABLE_COLUMN_PHOTO_ID + " = ?");
+                    //                    + "WHERE " + TABLE_COLUMN_PHOTO_ID + " = ?");
                     + "WHERE " + TABLE_COLUMN_PLACE_ID + " = ?");
             stmtCreatePlayer.setString(1, placeID);
             resultRow = stmtCreatePlayer.executeQuery();
@@ -632,15 +727,13 @@ public class Database {
         }
         return id;
     }
-    
-    
+
+    /**
+     * Safely close the database connections.
+     */
     public void closeDatabase() {
         DBUtils.closeQuietly(connection);
         connection = null;
-    }
-
-    public static Database getInstance() {
-        return DATABASE;
     }
 
 }

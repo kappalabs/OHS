@@ -1,8 +1,6 @@
 package com.kappa_labs.ohunter.server.net.requests;
 
-import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
-import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.FillPlacesRequest;
@@ -33,10 +31,6 @@ public class FillPlacesRequester extends FillPlacesRequest {
      */
     private static final int NUM_PHOTO_THREADS = 10;
 
-    
-    public FillPlacesRequester(Player player, String[] placeIDs, Photo.DAYTIME daytime, int width, int height) {
-        super(player, placeIDs, daytime, width, height);
-    }
 
     public FillPlacesRequester(FillPlacesRequest request) {
         super(request);

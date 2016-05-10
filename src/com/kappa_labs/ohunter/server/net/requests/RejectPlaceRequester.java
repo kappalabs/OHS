@@ -1,6 +1,5 @@
 package com.kappa_labs.ohunter.server.net.requests;
 
-import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.RejectPlaceRequest;
@@ -10,14 +9,6 @@ import com.kappa_labs.ohunter.server.database.DatabaseService;
  * Implementation of the RejectPlaceRequest from the OHL.
  */
 public class RejectPlaceRequester extends RejectPlaceRequest {
-
-    public RejectPlaceRequester(Player player, String placeID) {
-        super(player, placeID);
-    }
-
-    public RejectPlaceRequester(Player player, String placeID, int loss) {
-        super(player, placeID, loss);
-    }
 
     public RejectPlaceRequester(RejectPlaceRequest request) {
         super(request);

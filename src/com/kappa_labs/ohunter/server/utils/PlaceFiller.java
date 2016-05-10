@@ -87,6 +87,15 @@ public class PlaceFiller implements Runnable {
         private final int width, height;
         private final Photo.DAYTIME daytime;
 
+        /**
+         * Creates a new worker to retrieve one photo and set its daytime.
+         * 
+         * @param place The place whose photo this should be.
+         * @param photo The photo object that will contain the retrieved photo.
+         * @param width Maximum width of the photo.
+         * @param height Maximum height of the photo.
+         * @param daytime The preffered daytime of photos.
+         */
         public PhotosFiller(Place place, Photo photo, int width, int height, Photo.DAYTIME daytime) {
             this.place = place;
             this.photo = photo;

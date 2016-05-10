@@ -8,12 +8,14 @@ import com.kappa_labs.ohunter.server.analyzer.Analyzer;
 import com.kappa_labs.ohunter.server.database.Database;
 import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.net.OHException;
+import com.kappa_labs.ohunter.lib.net.Request;
 import com.kappa_labs.ohunter.lib.net.Response;
+import com.kappa_labs.ohunter.lib.requests.LoginRequest;
+import com.kappa_labs.ohunter.lib.requests.RegisterRequest;
+import com.kappa_labs.ohunter.lib.requests.SearchRequest;
 import com.kappa_labs.ohunter.server.net.Client;
 import com.kappa_labs.ohunter.server.net.Server;
-import com.kappa_labs.ohunter.server.net.requests.LoginRequester;
-import com.kappa_labs.ohunter.server.net.requests.RegisterRequester;
-import com.kappa_labs.ohunter.server.net.requests.SearchRequester;
+import com.kappa_labs.ohunter.server.net.requests.RequesterFactory;
 import com.kappa_labs.ohunter.server.utils.PasswordUtils;
 import java.awt.Color;
 import java.awt.FontMetrics;
@@ -72,8 +74,8 @@ public class OHunterServer {
         char[] passwd = "heslo".toCharArray();
         try {
             /* Registrace noveho hrace */
-            RegisterRequester rr = new RegisterRequester(nickname, PasswordUtils.getDigest(passwd));
-            Response re_rr = rr.execute();
+            Request rr = new RegisterRequest(nickname, PasswordUtils.getDigest(passwd));
+            Response re_rr = RequesterFactory.buildRequester(rr).execute();
             player = re_rr.player;
             if (player != null) {
                 System.out.println(player + "succesfuly registered");
@@ -86,8 +88,8 @@ public class OHunterServer {
             /* Uzivatel je jiz registrovan, lze pouzit login */
             if (ex1.getExType() == OHException.EXType.DUPLICATE_USER) {
                 try {
-                    LoginRequester lr = new LoginRequester(nickname, PasswordUtils.getDigest(passwd));
-                    Response re_lr = lr.execute();
+                    Request lr = new LoginRequest(nickname, PasswordUtils.getDigest(passwd));
+                    Response re_lr = RequesterFactory.buildRequester(lr).execute();
                     player = re_lr.player;
                     if (player != null) {
                         System.out.println(player + " succesfuly logged in");
@@ -103,20 +105,20 @@ public class OHunterServer {
         /* Po uspesne registraci lze vyuzivat ostatni requesty */
         if (player != null) {
             try {
-//                RejectPlaceRequest rpr = new RejectPlaceRequest(player, "ChIJt0Fb2c6-DUcRukqmEyseueM");
-//                rpr.execute();
+//                Request rpr = new RejectPlaceRequest(player, "ChIJt0Fb2c6-DUcRukqmEyseueM");
+//                RequesterFactory.buildRequester(rpr).execute();
                 
-                // Hlinsko a okoli
-                SearchRequester sr = new SearchRequester(
+                /* Hlinsko a okoli */
+                Request sr = new SearchRequest(
                         player, 49.7621308, 15.9075567, 10000, Photo.DAYTIME.DAY, 1280, 720);
-                // Vysehrad
-//                SearchRequester sr = new SearchRequester(
+                /* Vysehrad */
+//                Request sr = new SearchRequest(
 //                        player, 50.0647411, 14.4196972, 200, Photo.DAYTIME.DAY, 1280, 720);
-                // Staromestske namesti
-//                SearchRequester sr = new SearchRequester(
+                /* Staromestske namesti */
+//                Request sr = new SearchRequest(
 //                        player, 50.0872842, 14.4213600, 200, Photo.DAYTIME.DAY, 1280, 720);
                 
-                Response re_sr = sr.execute();
+                Response re_sr = RequesterFactory.buildRequester(sr).execute();
                 /* Vypis informaci o ziskanych mistech a jejich lokalni ulozeni */
                 File f = new File(PHOTOS_DIR);
                 if (!f.exists()) {
@@ -280,8 +282,8 @@ public class OHunterServer {
             testNight();
         }
         if (TEST_SERVER) {
-            System.out.println("\nTesting server:");
-            System.out.println("==============");
+            System.out.println("\nStarting server:");
+            System.out.println("================");
             startServer();
         }
     }

@@ -11,10 +11,6 @@ import com.kappa_labs.ohunter.server.database.DatabaseService;
  */
 public class LoginRequester extends LoginRequest {
 
-    public LoginRequester(String nickname, String password) {
-        super(nickname, password);
-    }
-
     public LoginRequester(LoginRequest request) {
         super(request);
     }

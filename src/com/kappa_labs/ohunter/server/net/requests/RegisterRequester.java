@@ -11,10 +11,6 @@ import com.kappa_labs.ohunter.lib.requests.RegisterRequest;
  */
 public class RegisterRequester extends RegisterRequest {
 
-    public RegisterRequester(String nickname, String password) {
-        super(nickname, password);
-    }
-
     public RegisterRequester(RegisterRequest request) {
         super(request);
     }

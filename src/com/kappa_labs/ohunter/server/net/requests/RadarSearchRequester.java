@@ -1,7 +1,6 @@
 package com.kappa_labs.ohunter.server.net.requests;
 
 import com.kappa_labs.ohunter.lib.entities.Place;
-import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.RadarSearchRequest;
@@ -22,10 +21,6 @@ public class RadarSearchRequester extends RadarSearchRequest {
      */
     public static final String TYPES = "university|synagogue|city_hall|church|museum|mosque|";
 
-    
-    public RadarSearchRequester(Player player, double lat, double lng, int radius) {
-        super(player, lat, lng, radius);
-    }
 
     public RadarSearchRequester(RadarSearchRequest request) {
         super(request);

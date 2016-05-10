@@ -195,10 +195,13 @@ public class DatabaseService {
      * @param placeID Place unique identifier.
      * @param photoReference Photo reference, from Google Places, of the image that was photographed.
      * @param timestamp Timestamp of the time, when the place was completed.
+     * @param discoveryGain Number of points given for finding the target.
+     * @param similarityGain Number of points given for photo similarity.
+     * @param huntNumber The number of hunt, in which the target was completed.
      * @throws OHException When place cannot be add to database.
      */
-    public void completePlace(Player player, String placeID, String photoReference, Timestamp timestamp) throws OHException {
-        if (!database.addCompleted(player.getUID(), placeID, photoReference, timestamp)) {
+    public void completeTarget(Player player, String placeID, String photoReference, Timestamp timestamp, int discoveryGain, int similarityGain, int huntNumber) throws OHException {
+        if (!database.addCompleted(player.getUID(), placeID, photoReference, timestamp, discoveryGain, similarityGain, huntNumber)) {
             throw new OHException("Error while adding to completed!", OHException.EXType.DATABASE_ERROR);
         }
     }
@@ -280,4 +283,5 @@ public class DatabaseService {
         }
         throw new OHException("Cannot check, database error!", OHException.EXType.DATABASE_ERROR);
     }
+    
 }

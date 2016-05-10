@@ -1,6 +1,5 @@
 package com.kappa_labs.ohunter.server.net.requests;
 
-import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.server.database.DatabaseService;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
@@ -10,10 +9,6 @@ import com.kappa_labs.ohunter.lib.requests.UpdatePlayerRequest;
  * Implementation of the UpdatePlayerRequest from the OHL.
  */
 public class UpdatePlayerRequester extends UpdatePlayerRequest {
-
-    public UpdatePlayerRequester(Player player) {
-        super(player);
-    }
 
     public UpdatePlayerRequester(UpdatePlayerRequest request) {
         super(request);
