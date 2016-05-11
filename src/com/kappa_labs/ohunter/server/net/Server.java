@@ -54,7 +54,7 @@ public class Server {
 
         try {
             server = new ServerSocket();
-            address = settingsManager.getServerIPv4();
+            address = settingsManager.getServerIP();
             if (address.isEmpty()) {
                 address = findServerIP();
             }
@@ -202,6 +202,7 @@ public class Server {
                                 + "player setscore 'playerID' 'score' - sets score of player with given ID\n"
                                 + "player setname 'playerID' 'name' - sets name of player with given ID\n"
                                 + "bests 'count' - prints the 'count' best players\n"
+                                + "config - reloads the config file\n"
                                 + "exit - terminate threads and shutdown the server");
                         break;
                     case "state":
@@ -264,6 +265,9 @@ public class Server {
                             Player best = bests[i];
                             System.out.println(best);
                         }
+                        break;
+                    case "config":
+                        settingsManager.reloadSettings();
                         break;
                     case "exit":
                         shutdown();

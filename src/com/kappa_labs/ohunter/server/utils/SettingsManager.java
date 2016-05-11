@@ -30,7 +30,7 @@ public class SettingsManager {
     private static final String SETTINGS_FILENAME = "config.txt";
 
     /* Values for Server */
-    private static final String SERVER_ADDRESS_IPV4_KEY = "server.address.ipv4";
+    private static final String SERVER_ADDRESS_IP_KEY = "server.address.ip";
     private static final String SERVER_PORT_KEY = "server.port";
     private static final String SERVER_CLIENT_POOL_SIZE_KEY = "server.client_pool_size";
 
@@ -66,16 +66,16 @@ public class SettingsManager {
     private static final String FILL_POOL_PHOTO_SIZE_KEY = "fill_requester.fill_pool_photo_size";
 
     private static SettingsManager settingsManager;
-    
 
+    
     /**
      * Initializes the static fields in this class, loads the settings and
      * creates the config file if does not exist.
      */
     static {
         /* Values for Server */
-        DEFAULT_STRING_PROPERTIES.put(SERVER_ADDRESS_IPV4_KEY, new Property("",
-                "The IPv4 adress where the server should run. Empty will cause console prompt."));
+        DEFAULT_STRING_PROPERTIES.put(SERVER_ADDRESS_IP_KEY, new Property("",
+                "The IP adress where the server should run. Empty will cause console prompt."));
         DEFAULT_INTEGER_PROPERTIES.put(SERVER_PORT_KEY, new Property(4242,
                 "The port which the server should use."));
         DEFAULT_INTEGER_PROPERTIES.put(SERVER_CLIENT_POOL_SIZE_KEY, new Property(8,
@@ -89,7 +89,7 @@ public class SettingsManager {
         DEFAULT_STRING_PROPERTIES.put(DATABASE_PASSWORD_KEY, new Property("",
                 "The password for the database."));
         String userHomeDir = System.getProperty("user.home", ".");
-        DEFAULT_STRING_PROPERTIES.put(DATABASE_LOCATION_KEY, new Property(userHomeDir 
+        DEFAULT_STRING_PROPERTIES.put(DATABASE_LOCATION_KEY, new Property(userHomeDir
                 + File.separator + "." + DEFAULT_STRING_PROPERTIES.get(DATABASE_NAME_KEY).getValue(),
                 "The path to the location of the database."));
 
@@ -136,15 +136,14 @@ public class SettingsManager {
 
         readSettings();
     }
-    
-    
+
     private SettingsManager() {
         /* Non-instantiable class */
     }
-    
+
     /**
      * Get instance of this class.
-     * 
+     *
      * @return The instance of this class.
      */
     public static SettingsManager getInstance() {
@@ -152,6 +151,14 @@ public class SettingsManager {
             settingsManager = new SettingsManager();
         }
         return settingsManager;
+    }
+
+    /**
+     * Reloads all the settings from the config file, creates it if it does not
+     * exist
+     */
+    public void reloadSettings() {
+        readSettings();
     }
 
     /**
@@ -279,14 +286,14 @@ public class SettingsManager {
         }
         return value;
     }
-    
+
     /**
-     * Gets the IPv4 adress where the server should run.
-     * 
-     * @return The IPv4 adress where the server should run.
+     * Gets the IP adress where the server should run.
+     *
+     * @return The IP adress where the server should run.
      */
-    public String getServerIPv4() {
-        return getStringProperty(SERVER_ADDRESS_IPV4_KEY);
+    public String getServerIP() {
+        return getStringProperty(SERVER_ADDRESS_IP_KEY);
     }
 
     /**
@@ -478,20 +485,20 @@ public class SettingsManager {
     public int getFillPoolPhotoThreadsNumber() {
         return getIntegerProperty(FILL_POOL_PHOTO_SIZE_KEY);
     }
-    
+
     /**
      * Class to store property value and its description.
-     * 
+     *
      * @param <T> Type of the value.
      */
     private static class Property<T> {
-        
+
         private final T value;
         private final String description;
 
         /**
          * Creates a new property with given value and its description.
-         * 
+         *
          * @param value The value of the property.
          * @param description The description of the property.
          */
@@ -502,8 +509,8 @@ public class SettingsManager {
 
         /**
          * Gets the value of the property.
-         * 
-         * @return The value of the property. 
+         *
+         * @return The value of the property.
          */
         public T getValue() {
             return value;
@@ -511,13 +518,13 @@ public class SettingsManager {
 
         /**
          * Gets the description of the property.
-         * 
+         *
          * @return The description of the property.
          */
         public String getDescription() {
             return description;
         }
-        
+
     }
 
 }
