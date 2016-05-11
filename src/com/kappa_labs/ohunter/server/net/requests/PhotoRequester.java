@@ -16,7 +16,10 @@ import java.util.logging.Logger;
  * Implementation of the FillPlacesRequest from the OHL.
  */
 public class PhotoRequester extends PhotoRequest {
+    
+    private final SettingsManager settingsManager = SettingsManager.getInstance();
 
+    
     public PhotoRequester(PhotoRequest request) {
         super(request);
     }
@@ -25,7 +28,7 @@ public class PhotoRequester extends PhotoRequest {
     public Response execute() throws OHException {
         /* Parallel download of the Photos */
         Photo[] photos = new Photo[photoReferences.length];
-        ExecutorService executor = Executors.newFixedThreadPool(SettingsManager.getPhotoPoolThreadsNumber());
+        ExecutorService executor = Executors.newFixedThreadPool(settingsManager.getPhotoPoolThreadsNumber());
         for (int i = 0; i < photos.length; i++) {
             photos[i] = new Photo();
             photos[i].reference = photoReferences[i];
@@ -33,7 +36,7 @@ public class PhotoRequester extends PhotoRequest {
         }
         executor.shutdown();
         try {
-            executor.awaitTermination(SettingsManager.getPhotoPoolMaxWaitTime(), TimeUnit.MINUTES);
+            executor.awaitTermination(settingsManager.getPhotoPoolMaxWaitTime(), TimeUnit.MINUTES);
         } catch (InterruptedException ex) {
             Logger.getLogger(SearchRequester.class.getName()).log(Level.WARNING, null, ex);
         }

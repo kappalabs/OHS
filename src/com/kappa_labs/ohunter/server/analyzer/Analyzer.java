@@ -23,6 +23,8 @@ import java.util.logging.Logger;
 public class Analyzer {
 
     private static final Logger LOGGER = Logger.getLogger(Analyzer.class.getName());
+    
+    private static final SettingsManager settingsManager = SettingsManager.getInstance();
 
     
     private Analyzer() {
@@ -88,8 +90,8 @@ public class Analyzer {
      */
     public static BufferedImage resize(BufferedImage image) {
         double divider = Math.max(
-                (double) image.getWidth() / SettingsManager.getOptimalWidth(),
-                (double) image.getHeight() / SettingsManager.getOptimalHeight());
+                (double) image.getWidth() / settingsManager.getOptimalWidth(),
+                (double) image.getHeight() / settingsManager.getOptimalHeight());
         return resize(image, (int) (image.getWidth() / divider), (int) (image.getHeight() / divider));
     }
 
@@ -172,13 +174,13 @@ public class Analyzer {
         Random rand = new Random();
         int x, y;
         double souc = 0;
-        for (int i = 0; i < SettingsManager.getRandomPhotoSamplesNumber(); i++) {
+        for (int i = 0; i < settingsManager.getRandomPhotoSamplesNumber(); i++) {
             x = rand.nextInt(img.getWidth());
             y = rand.nextInt(img.getHeight());
             souc += argbToIntensity(img.getRGB(x, y));
         }
-        double val = (souc / SettingsManager.getRandomPhotoSamplesNumber());
-        return val < SettingsManager.getNightTreshold();
+        double val = (souc / settingsManager.getRandomPhotoSamplesNumber());
+        return val < settingsManager.getNightTreshold();
     }
 
     /**

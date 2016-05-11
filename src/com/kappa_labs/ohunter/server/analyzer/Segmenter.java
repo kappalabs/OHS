@@ -21,6 +21,8 @@ import javax.imageio.ImageIO;
  */
 public class Segmenter {
 
+    private static final SettingsManager settingsManager = SettingsManager.getInstance();
+    
     /**
      * Stop treshold for the convergency speed of the cost function.
      */
@@ -46,7 +48,7 @@ public class Segmenter {
      */
     public static Segment[] segment(Photo photo) {
         /* DEBUG: Save the image before segmentation into local file */
-        if (SettingsManager.getKmeansSaveForDebug()) {
+        if (settingsManager.getKmeansSaveForDebug()) {
             try {
                 File nsDir = new File(NONSEGMENTED_PATH);
                 nsDir.mkdirs();
@@ -89,7 +91,7 @@ public class Segmenter {
             }
         }
         /* DEBUG: Save the segmented image into local file */
-        if (SettingsManager.getKmeansSaveForDebug()) {
+        if (settingsManager.getKmeansSaveForDebug()) {
             try {
                 File sDir = new File(SEGMENTED_PATH);
                 sDir.mkdirs();
@@ -115,7 +117,7 @@ public class Segmenter {
      * @return Pixels, which were computed as the best means.
      */
     private static Pixel[] kmeans(MyImage img) {
-        final int num_segments = SettingsManager.getKmeansSegmentsNumber();
+        final int num_segments = settingsManager.getKmeansSegmentsNumber();
         Pixel[] means = null;
         Centroid[] centroids = new Centroid[num_segments];
         Random rand = new Random();
@@ -124,7 +126,7 @@ public class Segmenter {
         float opt_value, prev_value;
 
         /* Pick up best random means to start with */
-        int repeats = SettingsManager.getKmeansInitRepeats();
+        int repeats = settingsManager.getKmeansInitRepeats();
         Pixel[] _means = null;
         while (repeats-- > 0) {
             if (_means == null) {
@@ -162,7 +164,7 @@ public class Segmenter {
          */
         opt_value = 0;
         prev_value = 0;
-        int num = SettingsManager.getKmeansMaxRepeats();
+        int num = settingsManager.getKmeansMaxRepeats();
         while (num-- > 0 && (prev_value == 0 || prev_value * KMEANS_CONVERG_TRESHOLD > opt_value)) {
             prev_value = opt_value;
             opt_value = 0;

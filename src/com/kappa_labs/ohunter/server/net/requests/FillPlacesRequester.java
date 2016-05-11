@@ -18,7 +18,10 @@ import java.util.logging.Logger;
  * Implementation of the FillPlacesRequest from the OHL.
  */
 public class FillPlacesRequester extends FillPlacesRequest {
+    
+    private final SettingsManager settingsManager = SettingsManager.getInstance();
 
+    
     public FillPlacesRequester(FillPlacesRequest request) {
         super(request);
     }
@@ -27,14 +30,14 @@ public class FillPlacesRequester extends FillPlacesRequest {
     public Response execute() throws OHException {
         /* Parallel download of the Place Details and Photos */
         List<Place> filledPlaces = new ArrayList<>();
-        ExecutorService executor = Executors.newFixedThreadPool(SettingsManager.getFillPoolFillerThreadsNumber());
+        ExecutorService executor = Executors.newFixedThreadPool(settingsManager.getFillPoolFillerThreadsNumber());
         for (Place place : places) {
             executor.execute(new PlaceFiller(place, filledPlaces, width, height,
-                    daytime, SettingsManager.getFillPoolPhotoThreadsNumber()));
+                    daytime, settingsManager.getFillPoolPhotoThreadsNumber()));
         }
         executor.shutdown();
         try {
-            executor.awaitTermination(SettingsManager.getFillPoolMaxWaitTime(), TimeUnit.MINUTES);
+            executor.awaitTermination(settingsManager.getFillPoolMaxWaitTime(), TimeUnit.MINUTES);
         } catch (InterruptedException ex) {
             Logger.getLogger(SearchRequester.class.getName()).log(Level.WARNING, null, ex);
         }

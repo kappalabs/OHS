@@ -1,12 +1,10 @@
 package com.kappa_labs.ohunter.server.utils;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
@@ -22,9 +20,9 @@ public class SettingsManager {
     private static final Logger LOGGER = Logger.getLogger(SettingsManager.class.getName());
 
     private static final Map<String, Integer> INTEGER_PROPERTIES = new HashMap<>();
-    private static final Map<String, Integer> DEFAULT_INTEGER_PROPERTIES = new HashMap<>();
+    private static final Map<String, Property<Integer>> DEFAULT_INTEGER_PROPERTIES = new HashMap<>();
     private static final Map<String, String> STRING_PROPERTIES = new HashMap<>();
-    private static final Map<String, String> DEFAULT_STRING_PROPERTIES = new HashMap<>();
+    private static final Map<String, Property<String>> DEFAULT_STRING_PROPERTIES = new HashMap<>();
 
     /**
      * Path to the configuration file.
@@ -32,6 +30,7 @@ public class SettingsManager {
     private static final String SETTINGS_FILENAME = "config.txt";
 
     /* Values for Server */
+    private static final String SERVER_ADDRESS_IPV4_KEY = "server.address.ipv4";
     private static final String SERVER_PORT_KEY = "server.port";
     private static final String SERVER_CLIENT_POOL_SIZE_KEY = "server.client_pool_size";
 
@@ -66,52 +65,93 @@ public class SettingsManager {
     private static final String FILL_POOL_FILLER_SIZE_KEY = "fill_requester.fill_pool_filler_size";
     private static final String FILL_POOL_PHOTO_SIZE_KEY = "fill_requester.fill_pool_photo_size";
 
+    private static SettingsManager settingsManager;
+    
+
+    /**
+     * Initializes the static fields in this class, loads the settings and
+     * creates the config file if does not exist.
+     */
     static {
         /* Values for Server */
-        DEFAULT_INTEGER_PROPERTIES.put(SERVER_PORT_KEY, 4242);
-        DEFAULT_INTEGER_PROPERTIES.put(SERVER_CLIENT_POOL_SIZE_KEY, 8);
+        DEFAULT_STRING_PROPERTIES.put(SERVER_ADDRESS_IPV4_KEY, new Property("",
+                "The IPv4 adress where the server should run. Empty will cause console prompt."));
+        DEFAULT_INTEGER_PROPERTIES.put(SERVER_PORT_KEY, new Property(4242,
+                "The port which the server should use."));
+        DEFAULT_INTEGER_PROPERTIES.put(SERVER_CLIENT_POOL_SIZE_KEY, new Property(8,
+                "The size of thread pool for clients."));
 
         /* Values for Database */
-        DEFAULT_STRING_PROPERTIES.put(DATABASE_NAME_KEY, "oHunterDB");
-        DEFAULT_STRING_PROPERTIES.put(DATABASE_USER_KEY, "");
-        DEFAULT_STRING_PROPERTIES.put(DATABASE_PASSWORD_KEY, "");
+        DEFAULT_STRING_PROPERTIES.put(DATABASE_NAME_KEY, new Property("oHunterDB",
+                "The name of the database."));
+        DEFAULT_STRING_PROPERTIES.put(DATABASE_USER_KEY, new Property("",
+                "The user for the database."));
+        DEFAULT_STRING_PROPERTIES.put(DATABASE_PASSWORD_KEY, new Property("",
+                "The password for the database."));
         String userHomeDir = System.getProperty("user.home", ".");
-        DEFAULT_STRING_PROPERTIES.put(DATABASE_LOCATION_KEY,
-                userHomeDir + File.separator + "." + SettingsManager.getDatabaseName());
+        DEFAULT_STRING_PROPERTIES.put(DATABASE_LOCATION_KEY, new Property(userHomeDir 
+                + File.separator + "." + DEFAULT_STRING_PROPERTIES.get(DATABASE_NAME_KEY).getValue(),
+                "The path to the location of the database."));
 
         /* Values for the game */
-        DEFAULT_INTEGER_PROPERTIES.put(INITIAL_SCORE_KEY, 100);
-        DEFAULT_STRING_PROPERTIES.put(GOOGLE_API_KEY, "AIzaSyCaLI54I822MZldkezUwu5uswteI1a15Qs");
+        DEFAULT_INTEGER_PROPERTIES.put(INITIAL_SCORE_KEY, new Property(100,
+                "The initial score for a new player."));
+//TODO: odstranit pred publikovanim!
+        DEFAULT_STRING_PROPERTIES.put(GOOGLE_API_KEY, new Property("AIzaSyCaLI54I822MZldkezUwu5uswteI1a15Qs",
+                "The Google API key for Google Places requests."));
 
         /* Values for Analyzer */
-        DEFAULT_INTEGER_PROPERTIES.put(RANDOM_PHOTO_SAMPLES_KEY, 128);
-        DEFAULT_INTEGER_PROPERTIES.put(NIGHT_THRESHOLD_KEY, 80);
-        DEFAULT_INTEGER_PROPERTIES.put(OPTIMAL_PHOTO_WIDTH_KEY, 256);
-        DEFAULT_INTEGER_PROPERTIES.put(OPTIMAL_PHOTO_HEIGHT_KEY, 256);
+        DEFAULT_INTEGER_PROPERTIES.put(RANDOM_PHOTO_SAMPLES_KEY, new Property(128,
+                "The number of random samples to determine the daytime."));
+        DEFAULT_INTEGER_PROPERTIES.put(NIGHT_THRESHOLD_KEY, new Property(80,
+                "The intensity treshold for determining night photos."));
+        DEFAULT_INTEGER_PROPERTIES.put(OPTIMAL_PHOTO_WIDTH_KEY, new Property(256,
+                "The optimal width of photo for measuring similarity."));
+        DEFAULT_INTEGER_PROPERTIES.put(OPTIMAL_PHOTO_HEIGHT_KEY, new Property(256,
+                "The optimal height of photo for measuring similarity."));
 
         /* Values for Segmenter */
-        DEFAULT_INTEGER_PROPERTIES.put(KMEANS_NUM_SEGMENTS_KEY, 64);
-        DEFAULT_INTEGER_PROPERTIES.put(KMEANS_MAX_REPEATS_KEY, 16);
-        DEFAULT_INTEGER_PROPERTIES.put(KMEANS_INIT_REPEATS_KEY, 32);
-        DEFAULT_INTEGER_PROPERTIES.put(KMEANS_SAVE_FOR_DEBUG_KEY, 1);
+        DEFAULT_INTEGER_PROPERTIES.put(KMEANS_NUM_SEGMENTS_KEY, new Property(64,
+                "The maximum number of repeats for the K-Means algorithm itself."));
+        DEFAULT_INTEGER_PROPERTIES.put(KMEANS_MAX_REPEATS_KEY, new Property(16,
+                "The maximum number of repeats for the K-Means algorithm itself."));
+        DEFAULT_INTEGER_PROPERTIES.put(KMEANS_INIT_REPEATS_KEY, new Property(32,
+                "The number of repeats when trying to find the best initial pixels."));
+        DEFAULT_INTEGER_PROPERTIES.put(KMEANS_SAVE_FOR_DEBUG_KEY, new Property(1,
+                "1 if the segmenter should save debug images, 0 otherwise"));
 
         /* Values for PhotoRequester */
-        DEFAULT_INTEGER_PROPERTIES.put(PHOTO_POOL_MAX_WAIT_TIME_KEY, 1);
-        DEFAULT_INTEGER_PROPERTIES.put(PHOTO_POOL_SIZE_KEY, 10);
+        DEFAULT_INTEGER_PROPERTIES.put(PHOTO_POOL_MAX_WAIT_TIME_KEY, new Property(1,
+                "The number of minutes to wait for thread termination."));
+        DEFAULT_INTEGER_PROPERTIES.put(PHOTO_POOL_SIZE_KEY, new Property(10,
+                "The number of threads allowed to retrieve the photos."));
 
         /* Values for FillPlacesRequester */
-        DEFAULT_INTEGER_PROPERTIES.put(FILL_POOL_MAX_WAIT_TIME_KEY, 1);
-        DEFAULT_INTEGER_PROPERTIES.put(FILL_POOL_FILLER_SIZE_KEY, 32);
-        DEFAULT_INTEGER_PROPERTIES.put(FILL_POOL_PHOTO_SIZE_KEY, 10);
+        DEFAULT_INTEGER_PROPERTIES.put(FILL_POOL_MAX_WAIT_TIME_KEY, new Property(1,
+                "The number of minutes to wait for threads termination."));
+        DEFAULT_INTEGER_PROPERTIES.put(FILL_POOL_FILLER_SIZE_KEY, new Property(32,
+                "The number of threads allowed for PlaceFiller thread pool."));
+        DEFAULT_INTEGER_PROPERTIES.put(FILL_POOL_PHOTO_SIZE_KEY, new Property(10,
+                "The number of threads allowed to retrieve photos for each place."));
 
         readSettings();
-        INTEGER_PROPERTIES.forEach((String t, Integer u) -> {
-            System.out.println("int property: <" + t + "; " + u + ">");
-        });
     }
-
+    
+    
     private SettingsManager() {
         /* Non-instantiable class */
+    }
+    
+    /**
+     * Get instance of this class.
+     * 
+     * @return The instance of this class.
+     */
+    public static SettingsManager getInstance() {
+        if (settingsManager == null) {
+            settingsManager = new SettingsManager();
+        }
+        return settingsManager;
     }
 
     /**
@@ -119,7 +159,7 @@ public class SettingsManager {
      */
     private static void createDefaultConfig() {
         DEFAULT_INTEGER_PROPERTIES.entrySet().stream().forEach((entry) -> {
-            addProperty(entry.getKey(), String.valueOf(entry.getValue()));
+            addProperty(entry.getKey(), entry.getValue());
         });
         DEFAULT_STRING_PROPERTIES.entrySet().stream().forEach((entry) -> {
             addProperty(entry.getKey(), entry.getValue());
@@ -153,9 +193,13 @@ public class SettingsManager {
                 String key = tokens[0].trim();
                 String value = tokens[1].trim();
                 try {
-                    INTEGER_PROPERTIES.put(key, Integer.valueOf(value));
-                } catch (NumberFormatException ex) {
-                    STRING_PROPERTIES.put(key, value);
+                    if (value.startsWith("\"")) {
+                        STRING_PROPERTIES.put(key, value.substring(1, value.length() - 1));
+                    } else {
+                        INTEGER_PROPERTIES.put(key, Integer.valueOf(value));
+                    }
+                } catch (NumberFormatException _ex) {
+                    LOGGER.log(Level.SEVERE, "Wrong configuration format at line: {0}", line);
                 }
             }
         } catch (FileNotFoundException ex) {
@@ -175,23 +219,24 @@ public class SettingsManager {
 
     /**
      * Writes given property to the config file.
-     * 
+     *
      * @param key Key of the property.
      * @param value Value of the property.
      */
-    private static void addProperty(String key, String value) {
+    private static void addProperty(String key, Property property) {
         PrintWriter printWriter = null;
         try {
             File settingsFile = new File(SETTINGS_FILENAME);
-//            if (settingsFile.createNewFile()) {
-//                createDefaultConfig();
-//                LOGGER.log(Level.FINE, "Created new configuration file in {0}", settingsFile.getAbsolutePath());
-//                return;
-//            }
             printWriter = new PrintWriter(new FileOutputStream(settingsFile, true));
-            printWriter.println(key + " = " + value);
+            printWriter.println("# " + property.getDescription());
+            if (property.getValue() instanceof String) {
+                printWriter.println(key + " = \"" + property.getValue() + "\"");
+            } else {
+                printWriter.println(key + " = " + property.getValue());
+            }
+            printWriter.println();
             printWriter.flush();
-            LOGGER.log(Level.FINER, "Property <{0}; {1}> was written to config.", new Object[]{key, value});
+            LOGGER.log(Level.FINER, "Property <{0}; {1}> was written to config.", new Object[]{key, property.getValue()});
         } catch (IOException ex) {
             LOGGER.log(Level.SEVERE, null, ex);
         } finally {
@@ -202,35 +247,46 @@ public class SettingsManager {
     }
 
     /**
-     * Gets the integer property from the hash table.
-     * If the value is not present, it saves and returns the default value.
-     * 
+     * Gets the integer property from the hash table. If the value is not
+     * present, it saves and returns the default value.
+     *
      * @param key The key for the requested property value.
      * @return The value for given property key.
      */
-    private static int getIntegerProperty(String key) {
+    private int getIntegerProperty(String key) {
         Integer value = INTEGER_PROPERTIES.get(key);
         if (value == null) {
-            value = DEFAULT_INTEGER_PROPERTIES.get(key);
-            addProperty(key, String.valueOf(value));
+            Property<Integer> prop = DEFAULT_INTEGER_PROPERTIES.get(key);
+            value = prop.getValue();
+            addProperty(key, prop);
         }
         return value;
     }
 
     /**
-     * Gets the string property from the hash table.
-     * If the value is not present, it saves and returns the default value.
-     * 
+     * Gets the string property from the hash table. If the value is not
+     * present, it saves and returns the default value.
+     *
      * @param key The key for the requested property value.
      * @return The value for given property key.
      */
-    private static String getStringProperty(String key) {
+    private String getStringProperty(String key) {
         String value = STRING_PROPERTIES.get(key);
         if (value == null) {
-            value = DEFAULT_STRING_PROPERTIES.get(key);
-            addProperty(key, value);
+            Property<String> prop = DEFAULT_STRING_PROPERTIES.get(key);
+            value = prop.getValue();
+            addProperty(key, prop);
         }
         return value;
+    }
+    
+    /**
+     * Gets the IPv4 adress where the server should run.
+     * 
+     * @return The IPv4 adress where the server should run.
+     */
+    public String getServerIPv4() {
+        return getStringProperty(SERVER_ADDRESS_IPV4_KEY);
     }
 
     /**
@@ -238,7 +294,7 @@ public class SettingsManager {
      *
      * @return The port which the server should use.
      */
-    public static int getServerPort() {
+    public int getServerPort() {
         return getIntegerProperty(SERVER_PORT_KEY);
     }
 
@@ -247,7 +303,7 @@ public class SettingsManager {
      *
      * @return The size of thread pool for clients.
      */
-    public static int getClientThreadsNumber() {
+    public int getClientThreadsNumber() {
         return getIntegerProperty(SERVER_CLIENT_POOL_SIZE_KEY);
     }
 
@@ -256,7 +312,7 @@ public class SettingsManager {
      *
      * @return The name of the database.
      */
-    public static String getDatabaseName() {
+    public String getDatabaseName() {
         return getStringProperty(DATABASE_NAME_KEY);
     }
 
@@ -265,7 +321,7 @@ public class SettingsManager {
      *
      * @return The user for the database.
      */
-    public static String getDatabaseUser() {
+    public String getDatabaseUser() {
         return getStringProperty(DATABASE_USER_KEY);
     }
 
@@ -274,16 +330,16 @@ public class SettingsManager {
      *
      * @return The password for the database.
      */
-    public static String getDatabasePassword() {
+    public String getDatabasePassword() {
         return getStringProperty(DATABASE_PASSWORD_KEY);
     }
-    
+
     /**
      * Gets the path to the location of the database.
-     * 
+     *
      * @return The path to the location of the database.
      */
-    public static String getDatabaseLocation() {
+    public String getDatabaseLocation() {
         return getStringProperty(DATABASE_LOCATION_KEY);
     }
 
@@ -292,7 +348,7 @@ public class SettingsManager {
      *
      * @return The initial score for a new player.
      */
-    public static int getInitialScore() {
+    public int getInitialScore() {
         return getIntegerProperty(INITIAL_SCORE_KEY);
     }
 
@@ -301,7 +357,7 @@ public class SettingsManager {
      *
      * @return The Google API key for Google Places requests.
      */
-    public static String getGoogleAPIKey() {
+    public String getGoogleAPIKey() {
         return getStringProperty(GOOGLE_API_KEY);
     }
 
@@ -310,7 +366,7 @@ public class SettingsManager {
      *
      * @return The number of random samples to determine the daytime.
      */
-    public static int getRandomPhotoSamplesNumber() {
+    public int getRandomPhotoSamplesNumber() {
         return getIntegerProperty(RANDOM_PHOTO_SAMPLES_KEY);
     }
 
@@ -319,7 +375,7 @@ public class SettingsManager {
      *
      * @return The intensity treshold for determining night photos.
      */
-    public static int getNightTreshold() {
+    public int getNightTreshold() {
         return getIntegerProperty(NIGHT_THRESHOLD_KEY);
     }
 
@@ -328,7 +384,7 @@ public class SettingsManager {
      *
      * @return The optimal width of photo for measuring similarity.
      */
-    public static int getOptimalWidth() {
+    public int getOptimalWidth() {
         return getIntegerProperty(OPTIMAL_PHOTO_WIDTH_KEY);
     }
 
@@ -337,7 +393,7 @@ public class SettingsManager {
      *
      * @return The optimal height of photo for measuring similarity.
      */
-    public static int getOptimalHeight() {
+    public int getOptimalHeight() {
         return getIntegerProperty(OPTIMAL_PHOTO_HEIGHT_KEY);
     }
 
@@ -346,7 +402,7 @@ public class SettingsManager {
      *
      * @return The number of segments, that the segmenter will find.
      */
-    public static int getKmeansSegmentsNumber() {
+    public int getKmeansSegmentsNumber() {
         return getIntegerProperty(KMEANS_NUM_SEGMENTS_KEY);
     }
 
@@ -355,7 +411,7 @@ public class SettingsManager {
      *
      * @return The maximum number of repeats for the K-Means algorithm itself.
      */
-    public static int getKmeansMaxRepeats() {
+    public int getKmeansMaxRepeats() {
         return getIntegerProperty(KMEANS_MAX_REPEATS_KEY);
     }
 
@@ -365,7 +421,7 @@ public class SettingsManager {
      * @return The number of repeats when trying to find the best initial
      * pixels.
      */
-    public static int getKmeansInitRepeats() {
+    public int getKmeansInitRepeats() {
         return getIntegerProperty(KMEANS_INIT_REPEATS_KEY);
     }
 
@@ -374,7 +430,7 @@ public class SettingsManager {
      *
      * @return True if the segmenter should save debug images.
      */
-    public static boolean getKmeansSaveForDebug() {
+    public boolean getKmeansSaveForDebug() {
         return getIntegerProperty(KMEANS_SAVE_FOR_DEBUG_KEY) > 0;
     }
 
@@ -383,7 +439,7 @@ public class SettingsManager {
      *
      * @return The number of minutes to wait for thread termination.
      */
-    public static int getPhotoPoolMaxWaitTime() {
+    public int getPhotoPoolMaxWaitTime() {
         return getIntegerProperty(PHOTO_POOL_MAX_WAIT_TIME_KEY);
     }
 
@@ -392,7 +448,7 @@ public class SettingsManager {
      *
      * @return The number of threads allowed to retrieve the photos.
      */
-    public static int getPhotoPoolThreadsNumber() {
+    public int getPhotoPoolThreadsNumber() {
         return getIntegerProperty(PHOTO_POOL_SIZE_KEY);
     }
 
@@ -401,7 +457,7 @@ public class SettingsManager {
      *
      * @return The number of minutes to wait for threads termination.
      */
-    public static int getFillPoolMaxWaitTime() {
+    public int getFillPoolMaxWaitTime() {
         return getIntegerProperty(FILL_POOL_MAX_WAIT_TIME_KEY);
     }
 
@@ -410,7 +466,7 @@ public class SettingsManager {
      *
      * @return The number of threads allowed for PlaceFiller thread pool.
      */
-    public static int getFillPoolFillerThreadsNumber() {
+    public int getFillPoolFillerThreadsNumber() {
         return getIntegerProperty(FILL_POOL_FILLER_SIZE_KEY);
     }
 
@@ -419,8 +475,49 @@ public class SettingsManager {
      *
      * @return The number of threads allowed to retrieve photos for each place.
      */
-    public static int getFillPoolPhotoThreadsNumber() {
+    public int getFillPoolPhotoThreadsNumber() {
         return getIntegerProperty(FILL_POOL_PHOTO_SIZE_KEY);
+    }
+    
+    /**
+     * Class to store property value and its description.
+     * 
+     * @param <T> Type of the value.
+     */
+    private static class Property<T> {
+        
+        private final T value;
+        private final String description;
+
+        /**
+         * Creates a new property with given value and its description.
+         * 
+         * @param value The value of the property.
+         * @param description The description of the property.
+         */
+        public Property(T value, String description) {
+            this.value = value;
+            this.description = description;
+        }
+
+        /**
+         * Gets the value of the property.
+         * 
+         * @return The value of the property. 
+         */
+        public T getValue() {
+            return value;
+        }
+
+        /**
+         * Gets the description of the property.
+         * 
+         * @return The description of the property.
+         */
+        public String getDescription() {
+            return description;
+        }
+        
     }
 
 }

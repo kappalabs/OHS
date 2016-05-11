@@ -3,7 +3,6 @@ package com.kappa_labs.ohunter.server.database;
 import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.server.utils.DBUtils;
 import com.kappa_labs.ohunter.server.utils.SettingsManager;
-import java.io.File;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -74,7 +73,7 @@ public class Database {
      * Sets the location of the database.
      */
     private static void setDBSystemDir() {
-        String systemDir = SettingsManager.getDatabaseLocation();
+        String systemDir = SettingsManager.getInstance().getDatabaseLocation();
 
         /* Set the db system directory. */
         System.setProperty("derby.system.home", systemDir);
@@ -88,10 +87,12 @@ public class Database {
         if (connection == null) {
             LOGGER.fine("Initializing database connection...");
 
-            String URL = "jdbc:derby:" + SettingsManager.getDatabaseName() + ";create=true";
+            String URL = "jdbc:derby:" + SettingsManager.getInstance().getDatabaseName() + ";create=true";
             try {
-                connection = DriverManager.getConnection(URL,
-                        SettingsManager.getDatabaseUser(), SettingsManager.getDatabasePassword());
+                connection = DriverManager.getConnection(
+                        URL,
+                        SettingsManager.getInstance().getDatabaseUser(),
+                        SettingsManager.getInstance().getDatabasePassword());
             } catch (SQLException ex) {
                 LOGGER.log(Level.SEVERE, null, ex);
             }

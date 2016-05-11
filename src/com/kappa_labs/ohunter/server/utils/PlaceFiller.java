@@ -60,7 +60,7 @@ public class PlaceFiller implements Runnable {
         });
         executor.shutdown();
         try {
-            executor.awaitTermination(SettingsManager.getFillPoolMaxWaitTime(), TimeUnit.MINUTES);
+            executor.awaitTermination(SettingsManager.getInstance().getFillPoolMaxWaitTime(), TimeUnit.MINUTES);
         } catch (InterruptedException ex) {
             Logger.getLogger(SearchRequester.class.getName()).log(Level.WARNING, null, ex);
         }

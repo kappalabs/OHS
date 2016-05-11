@@ -36,7 +36,9 @@ import java.util.logging.Logger;
 public class Server {
 
     private static final Logger LOGGER = Logger.getLogger(Server.class.getName());
-
+    
+    private final SettingsManager settingsManager = SettingsManager.getInstance();
+    
     private String address;
     private int port;
 
@@ -48,12 +50,15 @@ public class Server {
      */
     public void runServer() {
         ServerSocket server = null;
-        ExecutorService executor = Executors.newFixedThreadPool(SettingsManager.getClientThreadsNumber());
+        ExecutorService executor = Executors.newFixedThreadPool(settingsManager.getClientThreadsNumber());
 
         try {
             server = new ServerSocket();
-            address = findServerIP();
-            port = SettingsManager.getServerPort();
+            address = settingsManager.getServerIPv4();
+            if (address.isEmpty()) {
+                address = findServerIP();
+            }
+            port = settingsManager.getServerPort();
             SocketAddress addr = new InetSocketAddress(address, port);
             server.bind(addr);
             System.out.println("Server name: " + addr.toString());

@@ -22,6 +22,8 @@ import java.util.logging.Logger;
  * Implementation of the SearchRequest from the OHL.
  */
 public class SearchRequester extends SearchRequest {
+    
+    private final SettingsManager settingsManager = SettingsManager.getInstance();
 
     /**
      * Maximum number of places that will be send to the client.
@@ -63,14 +65,14 @@ public class SearchRequester extends SearchRequest {
 
         /* Parallel download of the Place Details and Photos */
         List<Place> places = new ArrayList<>();
-        ExecutorService executor = Executors.newFixedThreadPool(SettingsManager.getFillPoolFillerThreadsNumber());
+        ExecutorService executor = Executors.newFixedThreadPool(settingsManager.getFillPoolFillerThreadsNumber());
         for (Place place : all_places) {
             executor.execute(new PlaceFiller(place, places, width, height,
-                    daytime, SettingsManager.getFillPoolPhotoThreadsNumber()));
+                    daytime, settingsManager.getFillPoolPhotoThreadsNumber()));
         }
         executor.shutdown();
         try {
-            executor.awaitTermination(SettingsManager.getFillPoolMaxWaitTime(), TimeUnit.MINUTES);
+            executor.awaitTermination(settingsManager.getFillPoolMaxWaitTime(), TimeUnit.MINUTES);
         } catch (InterruptedException ex) {
             Logger.getLogger(SearchRequester.class.getName()).log(Level.SEVERE, null, ex);
         }

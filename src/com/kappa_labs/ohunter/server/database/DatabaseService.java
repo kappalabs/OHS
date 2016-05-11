@@ -10,6 +10,7 @@ import java.sql.Timestamp;
  */
 public class DatabaseService {
 
+    private final SettingsManager settingsManager = SettingsManager.getInstance();
     private final Database database = Database.getInstance();
 
     
@@ -42,12 +43,12 @@ public class DatabaseService {
                     OHException.EXType.DUPLICATE_USER);
         }
 
-        int uid = database.createPlayer(nickname, SettingsManager.getInitialScore(), password);
+        int uid = database.createPlayer(nickname, settingsManager.getInitialScore(), password);
         if (uid == -1) {
             throw new OHException("Error when creating new player " + nickname + "!",
                     OHException.EXType.DATABASE_ERROR);
         }
-        Player newPlayer = new Player(uid, nickname, SettingsManager.getInitialScore());
+        Player newPlayer = new Player(uid, nickname, settingsManager.getInitialScore());
 
         return newPlayer;
     }
@@ -60,8 +61,8 @@ public class DatabaseService {
      * @throws OHException When exception in the database arises.
      */
     public void resetPlayer(Player player) throws OHException {
-        if (database.editPlayer(player.getUID(), player.getNickname(), SettingsManager.getInitialScore(), null)) {
-            player.setScore(SettingsManager.getInitialScore());
+        if (database.editPlayer(player.getUID(), player.getNickname(), settingsManager.getInitialScore(), null)) {
+            player.setScore(settingsManager.getInitialScore());
         } else {
             throw new OHException("Error while editing player score!", OHException.EXType.DATABASE_ERROR);
         }
