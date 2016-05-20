@@ -24,7 +24,7 @@ public class CompareRequester extends CompareRequest {
                 bestSimilarity = similarity;
             }
         }
-        Response response = new Response(uid);
+        Response response = new Response(player);
         response.similarity = bestSimilarity;
         if (referencePhoto.daytime == Photo.DAYTIME.NIGHT) {
             response.similarity /= 2;

@@ -17,6 +17,9 @@ public class CompleteTargetRequester extends CompleteTargetRequest {
     @Override
     public Response execute() throws OHException {
         DatabaseService ds = new DatabaseService();
+        if (ds.isCompleted(player, placeID)) {
+            throw new OHException("This target was already completed!", OHException.EXType.OTHER);
+        }
         ds.completeTarget(player, placeID, photoReference, timestamp, discoveryGain, similarityGain, huntNumber);
         /* We also need to add some points to this player */
         int gain = discoveryGain + similarityGain;

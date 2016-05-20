@@ -3,9 +3,9 @@ package com.kappa_labs.ohunter.server.utils;
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
 import com.kappa_labs.ohunter.server.analyzer.Analyzer;
-import com.kappa_labs.ohunter.server.google_api.PlacesGetter;
-import com.kappa_labs.ohunter.server.net.requests.SearchRequester;
+import com.kappa_labs.ohunter.server.google_api.PlacesCommunicator;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -15,7 +15,7 @@ import java.util.logging.Logger;
 /**
  * Worker class for filling up given Place object with information and photos.
  */
-public class PlaceFiller implements Runnable {
+public class PlaceFiller implements Callable<Void> {
 
     private final Place mPlace;
     private final List<Place> mPlaces;
@@ -29,7 +29,7 @@ public class PlaceFiller implements Runnable {
      * given place. The result Place is added into the List only when no error
      * occures and at least one photo is available for that place.
      *
-     * @param place The place whose details will be retrieved.
+     * @param place The place whose placeDetails will be retrieved.
      * @param places The List, where the valid result should be placed.
      * @param width The maximum width of photos for given place.
      * @param height The maximum height of photos for given place.
@@ -47,34 +47,35 @@ public class PlaceFiller implements Runnable {
     }
 
     @Override
-    public void run() {
-        List<Photo> photos = PlacesGetter.details(mPlace);
+    public Void call() throws Exception {
+        List<Photo> photos = PlacesCommunicator.placeDetails(mPlace);
         if (photos == null) {
-            return;
+            return null;
         }
 
         /* Retrieve these photos */
         ExecutorService executor = Executors.newFixedThreadPool(maxThreads);
         photos.stream().forEach((photo) -> {
-            executor.execute(new PhotosFiller(mPlace, photo, width, height, daytime));
+            executor.submit(new PhotosFiller(mPlace, photo, width, height, daytime));
         });
         executor.shutdown();
         try {
             executor.awaitTermination(SettingsManager.getInstance().getFillPoolMaxWaitTime(), TimeUnit.MINUTES);
         } catch (InterruptedException ex) {
-            Logger.getLogger(SearchRequester.class.getName()).log(Level.WARNING, null, ex);
+            Logger.getLogger(PlaceFiller.class.getName()).log(Level.WARNING, null, ex);
         }
 
         /* Add only places with some photos, other are of no use on the client */
         if (mPlace.getNumberOfPhotos() > 0) {
             mPlaces.add(mPlace);
         }
+        return null;
     }
 
     /**
      * Worker class to retrieve one photo.
      */
-    private class PhotosFiller implements Runnable {
+    private class PhotosFiller implements Callable<Void> {
 
         private final Place place;
         private final Photo photo;
@@ -99,9 +100,9 @@ public class PlaceFiller implements Runnable {
         }
 
         @Override
-        public void run() {
+        public Void call() throws Exception {
             /* Download the image and store it into the photo */
-            PlacesGetter.photoRequest(photo, width, height);
+            PlacesCommunicator.photoRequest(photo, width, height);
             /* Determine whether the image was photographed at night */
             boolean isNight = Analyzer.isNight(photo);
             if (isNight) {
@@ -120,6 +121,7 @@ public class PlaceFiller implements Runnable {
             if (addPhoto) {
                 place.addPhoto(photo);
             }
+            return null;
         }
 
     }

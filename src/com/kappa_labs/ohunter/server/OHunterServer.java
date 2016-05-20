@@ -23,8 +23,10 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.rmi.RemoteException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -35,6 +37,8 @@ import javax.imageio.ImageIO;
  * Provides series of test methods.
  */
 public class OHunterServer {
+
+    private static final Logger LOGGER = Logger.getLogger(OHunterServer.class.getName());
     
     private static final String RESOURCES = "./resources/";
     private static final String DARK_MODELS = RESOURCES + "models/";
@@ -43,6 +47,7 @@ public class OHunterServer {
     private static final String RESULTS = "./results/";
     private static final String ANALYZER_RESULTS = RESULTS + "analyzer/";
     private static final String PHOTOS_DIR = RESULTS + "photos/";
+    private static final String STATISTICS = RESULTS + "statistics.txt";
     
     private static final String[] FILES_ANALYZE;
     private static final String[] FILES_MODEL;
@@ -66,6 +71,9 @@ public class OHunterServer {
     }
     
     
+    /**
+     * Test databazovych operaci.
+     */
     private static void testDatabase() throws RemoteException {
         /* Vypis obsahu databaze */
         Database.getInstance().showTable(Database.TABLE_NAME_PLAYER);
@@ -137,7 +145,7 @@ public class OHunterServer {
                         try {
                             ImageIO.write(((SImage) photo.sImage).toBufferedImage(), "jpg", outFile);
                         } catch (IOException ex) {
-                            Logger.getLogger(OHunterServer.class.getName()).log(Level.WARNING, null, ex);
+                            LOGGER.log(Level.WARNING, null, ex);
                         }
                     });
                 }
@@ -145,15 +153,14 @@ public class OHunterServer {
                 System.err.println(ex.getMessage());
             }
         }
-        Database.getInstance().closeDatabase();
     }
-    
+
     private static void loadImg(String fname, Photo photo) {
         try {
             photo.sImage = new SImage(ImageIO.read(new File(fname)));
             photo.reference = fname.replaceAll("\\..{3,4}$", "").replaceAll("^.*/", "");
         } catch (IOException ex) {
-            Logger.getLogger(OHunterServer.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
     }
     
@@ -186,9 +193,9 @@ public class OHunterServer {
     }
     
     /**
-     * Test porovnavani obrazku
+     * Test porovnavani obrazku.
      */
-    private static void testAnalyzer() {
+    private static void testAnalyzer(int numRepeats) {
         Photo ph1 = new Photo();
         Photo ph2 = new Photo();
         
@@ -196,32 +203,60 @@ public class OHunterServer {
             System.err.println("analyzer needs resource images in "+ANALYZER);
             return;
         }
-        int i = 1;
-        for (String fname1 : FILES_ANALYZE) {
+        int poc = 0;
+        for (int i = 0; i < FILES_ANALYZE.length; i++) {
+            String fname1 = FILES_ANALYZE[i];
             System.out.println("First image: "+fname1);
             loadImg(ANALYZER + fname1, ph1);
-            for (String fname2 : FILES_ANALYZE) {
+            for (int j = i; j < FILES_ANALYZE.length; j++) {
+                String fname2 = FILES_ANALYZE[j];
                 System.out.println(" -> against: "+fname2);
                 loadImg(ANALYZER + fname2, ph2);
                 float similarity;
                 try {
-                    similarity = Analyzer.computeSimilarity(ph1, ph2);
-                    System.out.println(" -> similarity = " + similarity + ", pc = "
-                            + similarity * 100 + "%");
-                    photoConnect(ANALYZER_RESULTS, ph1, ph2, (int)(similarity * 100) + "%");
+                    for (int k = 0; k < numRepeats; k++) {
+                        similarity = Analyzer.computeSimilarity(ph1, ph2);
+                        System.out.println(" -> similarity = " + similarity + " = "
+                                + similarity * 100 + "%");
+                        photoConnect(ANALYZER_RESULTS, ph1, ph2, (int) (similarity * 100) + "%", "_" + poc);
+                        addRowAndClose(STATISTICS, (similarity * 100) + "");
+                    }
+                    addRowAndClose(STATISTICS, "");
                 } catch (OHException ex) {
-                    Logger.getLogger(OHunterServer.class.getName()).log(Level.SEVERE, null, ex);
+                    LOGGER.log(Level.SEVERE, null, ex);
                 }
-                System.out.println("-("+(i++)+")--------------");
+                System.out.println("-("+(i+1)+")--------------");
             }
             System.out.println("--------------");
         }
     }
     
-    /*
-     * spoji a ohodnoti obrazky, ulozi do souboru
-    */
-    private static void photoConnect(String directory, Photo ph1, Photo ph2, String label) {
+    private static void addRowAndClose(String fileName, String row) {
+        PrintWriter printWriter = null;
+        try {
+            File settingsFile = new File(fileName);
+            printWriter = new PrintWriter(new FileOutputStream(settingsFile, true));
+            printWriter.println(row);
+            printWriter.flush();
+        } catch (IOException ex) {
+            LOGGER.log(Level.SEVERE, null, ex);
+        } finally {
+            if (printWriter != null) {
+                printWriter.close();
+            }
+        }
+    }
+    
+    /**
+     * Connects two pictures, writes label between them. Saves them into given directory.
+     * 
+     * @param directory Where the resulting picture should be stored.
+     * @param ph1 First photo will be on the left side.
+     * @param ph2 Second photo will be on the right side.
+     * @param label Label that will be in between the pictures.
+     * @param suffix Suffix will be added after the whole name before file extension.
+     */
+    private static void photoConnect(String directory, Photo ph1, Photo ph2, String label, String suffix) {
         BufferedImage binew = new BufferedImage(ph1.getWidth() + ph2.getWidth(),
                 ph1.getHeight(), BufferedImage.TYPE_INT_RGB);
         Graphics2D graph = binew.createGraphics();
@@ -239,11 +274,12 @@ public class OHunterServer {
         
         File resultsFile = new File(directory);
         resultsFile.mkdirs();
-        File outFile = new File(directory + ph1.reference + "_" + ph2.reference);
+        File outFile = new File(directory + ph1.generateName(64) + "_" + ph2.generateName(64)
+                + suffix + ".jpg");
         try {
-            ImageIO.write(binew, "png", outFile);
+            ImageIO.write(binew, "jpg", outFile);
         } catch (IOException ex) {
-            Logger.getLogger(OHunterServer.class.getName()).log(Level.WARNING, null, ex);
+            LOGGER.log(Level.WARNING, null, ex);
         }
     }
     
@@ -253,12 +289,6 @@ public class OHunterServer {
     private static void startServer() {
         Server server = new Server();
         server.runServer();
-        
-        if (TEST_CLIENT) {
-            /* Client test */
-            Client c = new Client(server);
-            c.connect();
-        }
     }
 
     public static void main(String[] args) {
@@ -268,13 +298,13 @@ public class OHunterServer {
             try {
                 testDatabase();
             } catch (RemoteException ex) {
-                Logger.getLogger(OHunterServer.class.getName()).log(Level.SEVERE, null, ex);
+                LOGGER.log(Level.SEVERE, null, ex);
             }
         }
         if (TEST_ANALYZER) {
             System.out.println("\nTesting analyzer:");
             System.out.println("==============");
-            testAnalyzer();
+            testAnalyzer(10);
         }
         if (TEST_NIGHT) {
             System.out.println("\nTesting night recognizer:");
@@ -285,6 +315,11 @@ public class OHunterServer {
             System.out.println("\nStarting server:");
             System.out.println("================");
             startServer();
+        }
+        if (TEST_CLIENT) {
+            System.out.println("\nStarting clients:");
+            System.out.println("================");
+            Client.main(null);
         }
     }
     

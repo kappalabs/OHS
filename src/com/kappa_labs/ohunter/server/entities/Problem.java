@@ -3,7 +3,6 @@ package com.kappa_labs.ohunter.server.entities;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,14 +21,6 @@ public class Problem {
      */
     public List<DistrPair> distr1, distr2;
 
-    
-    /**
-     * Create a new problem, instantiate the distributions.
-     */
-    public Problem() {
-        distr1 = new ArrayList<>();
-        distr2 = new ArrayList<>();
-    }
 
     /**
      * Saves the problem in MathProg language into a file.

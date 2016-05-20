@@ -4,6 +4,8 @@ import com.kappa_labs.ohunter.lib.entities.Player;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.server.utils.SettingsManager;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Class providing operations in database.
@@ -16,12 +18,24 @@ public class DatabaseService {
     
     /**
      * Gets the list of few best players in the game.
+     * Removes null players (non-existing ones) from the list.
      *
      * @param count The maximum number of best players.
      * @return The array of the best players.
+     * @throws com.kappa_labs.ohunter.lib.net.OHException When database error arises.
      */
-    public Player[] getBestPlayers(int count) {
-        return database.getBestPlayers(count);
+    public Player[] getBestPlayers(int count) throws OHException {
+        Player[] allBests = database.getBestPlayers(count);
+        if (allBests == null) {
+            throw new OHException("Error while getting best players", OHException.EXType.DATABASE_ERROR);
+        }
+        List<Player> notNullBests = new ArrayList<>();
+        for (Player player : allBests) {
+            if (player != null) {
+                notNullBests.add(player);
+            }
+        }
+        return notNullBests.toArray(new Player[notNullBests.size()]);
     }
 
     /**

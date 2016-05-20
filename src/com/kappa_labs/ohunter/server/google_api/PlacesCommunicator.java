@@ -2,6 +2,7 @@ package com.kappa_labs.ohunter.server.google_api;
 
 import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.entities.Place;
+import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.server.entities.SImage;
 import com.kappa_labs.ohunter.server.utils.SettingsManager;
 import java.io.IOException;
@@ -24,7 +25,7 @@ import org.json.simple.parser.ParseException;
 /**
  * Class providing connection with Google API.
  */
-public class PlacesGetter {
+public class PlacesCommunicator {
     
     private static final SettingsManager settingsManager = SettingsManager.getInstance();
 
@@ -48,10 +49,10 @@ public class PlacesGetter {
      * @param radius The radius of search are around given location in meters.
      * @param types Types of objects as GAPI specifies.
      * @return List of all places, that were returned by the request.
+     * @throws com.kappa_labs.ohunter.lib.net.OHException On communication or parsing error.
      */
-    public static List<Place> radarSearch(double latitude, double longitude, int radius, String keyword, String types) {
+    public static List<Place> radarSearch(double latitude, double longitude, int radius, String keyword, String types) throws OHException {
         List<Place> resultList = null;
-
         HttpURLConnection conn = null;
         StringBuilder jsonResults = new StringBuilder();
         try {
@@ -76,15 +77,17 @@ public class PlacesGetter {
                 jsonResults.append(buff, 0, read);
             }
         } catch (MalformedURLException ex) {
-            Logger.getLogger(PlacesGetter.class.getName()).log(Level.WARNING,
-                    "Error processing Places API URL", ex);
-            return resultList;
+            Logger.getLogger(PlacesCommunicator.class.getName()).log(Level.WARNING,
+                    "Error while processing Places API URL", ex);
+            throw new OHException("Error while processing Places API URL", OHException.EXType.OTHER);
         } catch (UnsupportedEncodingException ex) {
-            Logger.getLogger(PlacesGetter.class.getName()).log(Level.WARNING, null, ex);
+            Logger.getLogger(PlacesCommunicator.class.getName()).log(Level.WARNING,
+                    "Error while connecting to Places API", ex);
+            throw new OHException("Error while connecting to Places API", OHException.EXType.OTHER);
         } catch (IOException ex) {
-            Logger.getLogger(PlacesGetter.class.getName()).log(Level.WARNING,
-                    "Error connecting to Places API", ex);
-            return resultList;
+            Logger.getLogger(PlacesCommunicator.class.getName()).log(Level.WARNING,
+                    "Error while connecting to Places API", ex);
+            throw new OHException("Error while connecting to Places API", OHException.EXType.OTHER);
         } finally {
             if (conn != null) {
                 conn.disconnect();
@@ -107,8 +110,9 @@ public class PlacesGetter {
                 resultList.add(place);
             }
         } catch (ParseException ex) {
-            Logger.getLogger(PlacesGetter.class.getName()).log(Level.WARNING,
+            Logger.getLogger(PlacesCommunicator.class.getName()).log(Level.WARNING,
                     "Error while parsing JSON results", ex);
+            throw new OHException("Error while parsing JSON results", OHException.EXType.OTHER);
         }
 
         return resultList;
@@ -117,15 +121,16 @@ public class PlacesGetter {
     /**
      * Performs request on Google API Place Details. Has acess to aditional
      * information about place, which is specified by place_id. References to
-     * photos of this place will be returned in List. Aditional details will be
+     * photos of this place will be returned in List. Aditional placeDetails will be
      * added to the given Place object.
      *
      * @param place Place object with place_id String, that was returned by
      * Radar Search to specify a place.
      * @return List of photos. They will contain only references, not the image
      * itself yet.
+     * @throws com.kappa_labs.ohunter.lib.net.OHException On communication or parsing error.
      */
-    public static List<Photo> details(Place place) {
+    public static List<Photo> placeDetails(Place place) throws OHException {
         List<Photo> photoList = null;
         HttpURLConnection conn = null;
         StringBuilder jsonResults = new StringBuilder();
@@ -148,13 +153,13 @@ public class PlacesGetter {
                 jsonResults.append(buff, 0, read);
             }
         } catch (MalformedURLException ex) {
-            Logger.getLogger(PlacesGetter.class.getName()).log(Level.WARNING,
-                    "Error processing Places API URL", ex);
-            return null;
+            Logger.getLogger(PlacesCommunicator.class.getName()).log(Level.WARNING,
+                    "Error while processing Places API URL", ex);
+            throw new OHException("Error while processing Places API URL", OHException.EXType.OTHER);
         } catch (IOException ex) {
-            Logger.getLogger(PlacesGetter.class.getName()).log(Level.WARNING,
-                    "Error connecting to Places API", ex);
-            return null;
+            Logger.getLogger(PlacesCommunicator.class.getName()).log(Level.WARNING,
+                    "Error while connecting to Places API", ex);
+            throw new OHException("Error while connecting to Places API", OHException.EXType.OTHER);
         } finally {
             if (conn != null) {
                 conn.disconnect();
@@ -198,8 +203,9 @@ public class PlacesGetter {
                 photoList.add(photo);
             }
         } catch (ParseException ex) {
-            Logger.getLogger(PlacesGetter.class.getName()).log(Level.WARNING,
+            Logger.getLogger(PlacesCommunicator.class.getName()).log(Level.WARNING,
                     "Error while parsing JSON results", ex);
+            throw new OHException("Error while parsing JSON results", OHException.EXType.OTHER);
         }
 
         return photoList;
@@ -223,8 +229,9 @@ public class PlacesGetter {
      *
      * @param photo The Photo object, where the image should be added.
      * @return The same Photo object with associated image.
+     * @throws com.kappa_labs.ohunter.lib.net.OHException On communication or parsing error.
      */
-    public static Photo photoRequest(Photo photo) {
+    public static Photo photoRequest(Photo photo) throws OHException {
         return photoRequest(photo, 1600, 1600);
     }
 
@@ -242,8 +249,9 @@ public class PlacesGetter {
      * @param maxWidth As described above.
      * @param maxHeight As described above.
      * @return The same Photo object with associated image.
+     * @throws com.kappa_labs.ohunter.lib.net.OHException On communication or parsing error.
      */
-    public static Photo photoRequest(Photo photo, int maxWidth, int maxHeight) {
+    public static Photo photoRequest(Photo photo, int maxWidth, int maxHeight) throws OHException {
         HttpURLConnection conn = null;
 
         try {
@@ -261,22 +269,22 @@ public class PlacesGetter {
                 ((SImage) photo.sImage).setImage(ImageIO.read(url));
             } catch (NullPointerException ex) {
                 /* Rare exception - Java bug https://bugs.openjdk.java.net/browse/JDK-8058973 */
-                Logger.getLogger(PlacesGetter.class.getName()).log(Level.WARNING,
+                Logger.getLogger(PlacesCommunicator.class.getName()).log(Level.WARNING,
                         "Error while getting the Photo", ex);
                 photo.sImage = null;
-                return null;
+                throw new OHException("Error while getting the Photo", OHException.EXType.OTHER);
             }
             if (photo.sImage == null) {
                 return null;
             }
         } catch (MalformedURLException ex) {
-            Logger.getLogger(PlacesGetter.class.getName()).log(Level.WARNING,
-                    "Error processing Places API URL", ex);
-            return null;
+            Logger.getLogger(PlacesCommunicator.class.getName()).log(Level.WARNING,
+                    "Error while processing Places API URL", ex);
+            throw new OHException("Error while processing Places API URL", OHException.EXType.OTHER);
         } catch (IOException ex) {
-            Logger.getLogger(PlacesGetter.class.getName()).log(Level.WARNING,
-                    "Error connecting to Places API", ex);
-            return null;
+            Logger.getLogger(PlacesCommunicator.class.getName()).log(Level.WARNING,
+                    "Error while connecting to Places API", ex);
+            throw new OHException("Error while connecting to Places API", OHException.EXType.OTHER);
         } finally {
             if (conn != null) {
                 conn.disconnect();

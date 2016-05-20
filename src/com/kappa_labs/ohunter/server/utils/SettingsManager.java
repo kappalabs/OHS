@@ -8,6 +8,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -19,10 +20,8 @@ public class SettingsManager {
 
     private static final Logger LOGGER = Logger.getLogger(SettingsManager.class.getName());
 
-    private static final Map<String, Integer> INTEGER_PROPERTIES = new HashMap<>();
-    private static final Map<String, Property<Integer>> DEFAULT_INTEGER_PROPERTIES = new HashMap<>();
-    private static final Map<String, String> STRING_PROPERTIES = new HashMap<>();
-    private static final Map<String, Property<String>> DEFAULT_STRING_PROPERTIES = new HashMap<>();
+    private static final Map<String, Object> PROPERTIES = new HashMap<>();
+    private static final Map<String, Property<?>> DEFAULT_PROPERTIES = new LinkedHashMap<>();
 
     /**
      * Path to the configuration file.
@@ -55,6 +54,7 @@ public class SettingsManager {
     private static final String KMEANS_MAX_REPEATS_KEY = "segmenter.kmeans_max_repeats";
     private static final String KMEANS_INIT_REPEATS_KEY = "segmenter.kmeans_init_repeats";
     private static final String KMEANS_SAVE_FOR_DEBUG_KEY = "segmenter.kmeans_save_for_debug";
+    private static final String SIMILARITY_NUM_REPEATS = "segmenter.similarity_num_repeats";
 
     /* Values for PhotoRequester */
     private static final String PHOTO_POOL_MAX_WAIT_TIME_KEY = "photo_requester.photo_pool_max_wait_time";
@@ -74,64 +74,66 @@ public class SettingsManager {
      */
     static {
         /* Values for Server */
-        DEFAULT_STRING_PROPERTIES.put(SERVER_ADDRESS_IP_KEY, new Property("",
+        DEFAULT_PROPERTIES.put(SERVER_ADDRESS_IP_KEY, new Property("",
                 "The IP adress where the server should run. Empty will cause console prompt."));
-        DEFAULT_INTEGER_PROPERTIES.put(SERVER_PORT_KEY, new Property(4242,
+        DEFAULT_PROPERTIES.put(SERVER_PORT_KEY, new Property(4242,
                 "The port which the server should use."));
-        DEFAULT_INTEGER_PROPERTIES.put(SERVER_CLIENT_POOL_SIZE_KEY, new Property(8,
+        DEFAULT_PROPERTIES.put(SERVER_CLIENT_POOL_SIZE_KEY, new Property(8,
                 "The size of thread pool for clients."));
 
         /* Values for Database */
-        DEFAULT_STRING_PROPERTIES.put(DATABASE_NAME_KEY, new Property("oHunterDB",
+        DEFAULT_PROPERTIES.put(DATABASE_NAME_KEY, new Property("oHunterDB",
                 "The name of the database."));
-        DEFAULT_STRING_PROPERTIES.put(DATABASE_USER_KEY, new Property("",
+        DEFAULT_PROPERTIES.put(DATABASE_USER_KEY, new Property("",
                 "The user for the database."));
-        DEFAULT_STRING_PROPERTIES.put(DATABASE_PASSWORD_KEY, new Property("",
+        DEFAULT_PROPERTIES.put(DATABASE_PASSWORD_KEY, new Property("",
                 "The password for the database."));
         String userHomeDir = System.getProperty("user.home", ".");
-        DEFAULT_STRING_PROPERTIES.put(DATABASE_LOCATION_KEY, new Property(userHomeDir
-                + File.separator + "." + DEFAULT_STRING_PROPERTIES.get(DATABASE_NAME_KEY).getValue(),
+        DEFAULT_PROPERTIES.put(DATABASE_LOCATION_KEY, new Property(userHomeDir
+                + File.separator + "." + DEFAULT_PROPERTIES.get(DATABASE_NAME_KEY).getValue(),
                 "The path to the location of the database."));
 
         /* Values for the game */
-        DEFAULT_INTEGER_PROPERTIES.put(INITIAL_SCORE_KEY, new Property(100,
+        DEFAULT_PROPERTIES.put(INITIAL_SCORE_KEY, new Property(100,
                 "The initial score for a new player."));
 //TODO: odstranit pred publikovanim!
-        DEFAULT_STRING_PROPERTIES.put(GOOGLE_API_KEY, new Property("AIzaSyCaLI54I822MZldkezUwu5uswteI1a15Qs",
+        DEFAULT_PROPERTIES.put(GOOGLE_API_KEY, new Property("AIzaSyCaLI54I822MZldkezUwu5uswteI1a15Qs",
                 "The Google API key for Google Places requests."));
 
         /* Values for Analyzer */
-        DEFAULT_INTEGER_PROPERTIES.put(RANDOM_PHOTO_SAMPLES_KEY, new Property(128,
+        DEFAULT_PROPERTIES.put(RANDOM_PHOTO_SAMPLES_KEY, new Property(128,
                 "The number of random samples to determine the daytime."));
-        DEFAULT_INTEGER_PROPERTIES.put(NIGHT_THRESHOLD_KEY, new Property(80,
+        DEFAULT_PROPERTIES.put(NIGHT_THRESHOLD_KEY, new Property(75,
                 "The intensity treshold for determining night photos."));
-        DEFAULT_INTEGER_PROPERTIES.put(OPTIMAL_PHOTO_WIDTH_KEY, new Property(256,
+        DEFAULT_PROPERTIES.put(OPTIMAL_PHOTO_WIDTH_KEY, new Property(256,
                 "The optimal width of photo for measuring similarity."));
-        DEFAULT_INTEGER_PROPERTIES.put(OPTIMAL_PHOTO_HEIGHT_KEY, new Property(256,
+        DEFAULT_PROPERTIES.put(OPTIMAL_PHOTO_HEIGHT_KEY, new Property(256,
                 "The optimal height of photo for measuring similarity."));
 
         /* Values for Segmenter */
-        DEFAULT_INTEGER_PROPERTIES.put(KMEANS_NUM_SEGMENTS_KEY, new Property(64,
+        DEFAULT_PROPERTIES.put(KMEANS_NUM_SEGMENTS_KEY, new Property(64,
                 "The maximum number of repeats for the K-Means algorithm itself."));
-        DEFAULT_INTEGER_PROPERTIES.put(KMEANS_MAX_REPEATS_KEY, new Property(16,
+        DEFAULT_PROPERTIES.put(KMEANS_MAX_REPEATS_KEY, new Property(16,
                 "The maximum number of repeats for the K-Means algorithm itself."));
-        DEFAULT_INTEGER_PROPERTIES.put(KMEANS_INIT_REPEATS_KEY, new Property(32,
+        DEFAULT_PROPERTIES.put(KMEANS_INIT_REPEATS_KEY, new Property(32,
                 "The number of repeats when trying to find the best initial pixels."));
-        DEFAULT_INTEGER_PROPERTIES.put(KMEANS_SAVE_FOR_DEBUG_KEY, new Property(1,
+        DEFAULT_PROPERTIES.put(KMEANS_SAVE_FOR_DEBUG_KEY, new Property(1,
                 "1 if the segmenter should save debug images, 0 otherwise"));
+        DEFAULT_PROPERTIES.put(SIMILARITY_NUM_REPEATS, new Property(5,
+                "Number of repeats of the similarity measure algorithm"));
 
         /* Values for PhotoRequester */
-        DEFAULT_INTEGER_PROPERTIES.put(PHOTO_POOL_MAX_WAIT_TIME_KEY, new Property(1,
+        DEFAULT_PROPERTIES.put(PHOTO_POOL_MAX_WAIT_TIME_KEY, new Property(1,
                 "The number of minutes to wait for thread termination."));
-        DEFAULT_INTEGER_PROPERTIES.put(PHOTO_POOL_SIZE_KEY, new Property(10,
+        DEFAULT_PROPERTIES.put(PHOTO_POOL_SIZE_KEY, new Property(10,
                 "The number of threads allowed to retrieve the photos."));
 
         /* Values for FillPlacesRequester */
-        DEFAULT_INTEGER_PROPERTIES.put(FILL_POOL_MAX_WAIT_TIME_KEY, new Property(1,
+        DEFAULT_PROPERTIES.put(FILL_POOL_MAX_WAIT_TIME_KEY, new Property(1,
                 "The number of minutes to wait for threads termination."));
-        DEFAULT_INTEGER_PROPERTIES.put(FILL_POOL_FILLER_SIZE_KEY, new Property(32,
+        DEFAULT_PROPERTIES.put(FILL_POOL_FILLER_SIZE_KEY, new Property(32,
                 "The number of threads allowed for PlaceFiller thread pool."));
-        DEFAULT_INTEGER_PROPERTIES.put(FILL_POOL_PHOTO_SIZE_KEY, new Property(10,
+        DEFAULT_PROPERTIES.put(FILL_POOL_PHOTO_SIZE_KEY, new Property(10,
                 "The number of threads allowed to retrieve photos for each place."));
 
         readSettings();
@@ -165,10 +167,7 @@ public class SettingsManager {
      * Saves the default configuration into the config file.
      */
     private static void createDefaultConfig() {
-        DEFAULT_INTEGER_PROPERTIES.entrySet().stream().forEach((entry) -> {
-            addProperty(entry.getKey(), entry.getValue());
-        });
-        DEFAULT_STRING_PROPERTIES.entrySet().stream().forEach((entry) -> {
+        DEFAULT_PROPERTIES.entrySet().stream().forEach((entry) -> {
             addProperty(entry.getKey(), entry.getValue());
         });
     }
@@ -201,9 +200,9 @@ public class SettingsManager {
                 String value = tokens[1].trim();
                 try {
                     if (value.startsWith("\"")) {
-                        STRING_PROPERTIES.put(key, value.substring(1, value.length() - 1));
+                        PROPERTIES.put(key, value.substring(1, value.length() - 1));
                     } else {
-                        INTEGER_PROPERTIES.put(key, Integer.valueOf(value));
+                        PROPERTIES.put(key, Integer.valueOf(value));
                     }
                 } catch (NumberFormatException _ex) {
                     LOGGER.log(Level.SEVERE, "Wrong configuration format at line: {0}", line);
@@ -261,10 +260,10 @@ public class SettingsManager {
      * @return The value for given property key.
      */
     private int getIntegerProperty(String key) {
-        Integer value = INTEGER_PROPERTIES.get(key);
+        Integer value = (Integer) PROPERTIES.get(key);
         if (value == null) {
-            Property<Integer> prop = DEFAULT_INTEGER_PROPERTIES.get(key);
-            value = prop.getValue();
+            Property prop = DEFAULT_PROPERTIES.get(key);
+            value = (Integer) prop.getValue();
             addProperty(key, prop);
         }
         return value;
@@ -278,10 +277,10 @@ public class SettingsManager {
      * @return The value for given property key.
      */
     private String getStringProperty(String key) {
-        String value = STRING_PROPERTIES.get(key);
+        String value = (String) PROPERTIES.get(key);
         if (value == null) {
-            Property<String> prop = DEFAULT_STRING_PROPERTIES.get(key);
-            value = prop.getValue();
+            Property prop = DEFAULT_PROPERTIES.get(key);
+            value = (String) prop.getValue();
             addProperty(key, prop);
         }
         return value;
@@ -439,6 +438,15 @@ public class SettingsManager {
      */
     public boolean getKmeansSaveForDebug() {
         return getIntegerProperty(KMEANS_SAVE_FOR_DEBUG_KEY) > 0;
+    }
+    
+    /**
+     * Number of repeats of the similarity measure algorithm.
+     * 
+     * @return The number of repeats of the similarity measure algorithm.
+     */
+    public int getSimilarityNumberOfRepeats() {
+        return getIntegerProperty(SIMILARITY_NUM_REPEATS);
     }
 
     /**

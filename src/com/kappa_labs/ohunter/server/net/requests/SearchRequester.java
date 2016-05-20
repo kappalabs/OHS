@@ -1,7 +1,7 @@
 package com.kappa_labs.ohunter.server.net.requests;
 
 import com.kappa_labs.ohunter.server.database.DatabaseService;
-import com.kappa_labs.ohunter.server.google_api.PlacesGetter;
+import com.kappa_labs.ohunter.server.google_api.PlacesCommunicator;
 import com.kappa_labs.ohunter.lib.entities.Place;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
@@ -40,34 +40,39 @@ public class SearchRequester extends SearchRequest {
         Logger.getLogger(SearchRequester.class.getName()).log(Level.FINE,
                 "SearchRequest on [{0}; {1}]; radius = {2}", new Object[]{latitude, longitude, radius});
         /* Retrieve all possible places */
-        List<Place> all_places;
-        all_places = PlacesGetter.radarSearch(latitude, longitude, radius, "", TYPES);
+        List<Place> allPlaces = PlacesCommunicator.radarSearch(latitude, longitude, radius, "", TYPES);
 
         /* Filter completed, blocked and rejected ones */
         DatabaseService ds = new DatabaseService();
-        all_places = all_places.stream().filter((Place place) -> {
-            try {
-                return !ds.isCompleted(player, place.getID())
-                        && !ds.isBlocked(place.getID())
-                        && !ds.isRejected(player, place.getID());
-            } catch (OHException ex) {
-                /* NOTE: Cannot throw new OHException(keyWord) from lambda directly */
-                throw new RuntimeException(ex);
+        try {
+            allPlaces = allPlaces.stream().filter((Place place) -> {
+                try {
+                    return !ds.isCompleted(player, place.getID())
+                            && !ds.isBlocked(place.getID())
+                            && !ds.isRejected(player, place.getID());
+                } catch (OHException ex) {
+                    /* NOTE: Cannot throw new OHException(keyWord) from lambda directly */
+                    throw new RuntimeException(ex);
+                }
+            }).collect(Collectors.toCollection(ArrayList::new));
+        } catch (RuntimeException ex) {
+            if (ex.getCause() instanceof OHException) {
+                throw (OHException) ex.getCause();
             }
-        }).collect(Collectors.toCollection(ArrayList::new));
+        }
 
         /* Reduction of the number of places */
-        int size = all_places.size();
+        int size = allPlaces.size();
         int i = size;
         while (--i >= Math.min(size, MAX_PLACES)) {
-            all_places.remove(i);
+            allPlaces.remove(i);
         }
 
         /* Parallel download of the Place Details and Photos */
         List<Place> places = new ArrayList<>();
         ExecutorService executor = Executors.newFixedThreadPool(settingsManager.getFillPoolFillerThreadsNumber());
-        for (Place place : all_places) {
-            executor.execute(new PlaceFiller(place, places, width, height,
+        for (Place place : allPlaces) {
+            executor.submit(new PlaceFiller(place, places, width, height,
                     daytime, settingsManager.getFillPoolPhotoThreadsNumber()));
         }
         executor.shutdown();
@@ -75,10 +80,11 @@ public class SearchRequester extends SearchRequest {
             executor.awaitTermination(settingsManager.getFillPoolMaxWaitTime(), TimeUnit.MINUTES);
         } catch (InterruptedException ex) {
             Logger.getLogger(SearchRequester.class.getName()).log(Level.SEVERE, null, ex);
+            throw new OHException("Server too busy now!", OHException.EXType.SERVER_OCCUPIED);
         }
 
         /* Store the data in Response object */
-        Response response = new Response(uid);
+        Response response = new Response(player);
         response.places = places.toArray(new Place[0]);
 
         Logger.getLogger(SearchRequester.class.getName()).log(Level.FINE,

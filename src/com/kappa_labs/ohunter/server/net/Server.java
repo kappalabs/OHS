@@ -6,9 +6,7 @@ import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Request;
 import com.kappa_labs.ohunter.server.database.Database;
 import com.kappa_labs.ohunter.server.net.requests.RequesterFactory;
-import com.kappa_labs.ohunter.server.net.requests.SearchRequester;
 import com.kappa_labs.ohunter.server.utils.SettingsManager;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InvalidClassException;
 import java.io.ObjectInputStream;
@@ -24,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.InputMismatchException;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -40,37 +39,74 @@ public class Server {
     private final SettingsManager settingsManager = SettingsManager.getInstance();
     
     private String address;
-    private int port;
+    private final int port;
+    
+    private ServerSocket mServerSocket;
+    private ExecutorService mExecutor;
 
-    private final boolean debugCache = false;
-
+    
+    /**
+     * Creates a new server to service the clients.
+     */
+    public Server() {
+        address = settingsManager.getServerIP();
+        if (address.isEmpty()) {
+            address = findServerIP();
+        }
+        port = settingsManager.getServerPort();
+    }
+    
+    /**
+     * Runs the server in background as a thread.
+     */
+    public void runInBackground() {
+        ServerWorker serverWorker = new ServerWorker(this);
+        serverWorker.start();
+    }
+    
+    /**
+     * Forces shut down of all the threads of all clients and closes the server.
+     */
+    public void shutDown() {
+        System.out.println("Shutting down the server...");
+        LOGGER.fine("Shutting down the server...");
+        if (mExecutor != null) {
+            mExecutor.shutdownNow();
+        }
+        if (mServerSocket != null) {
+            try {
+                mServerSocket.close();
+            } catch (IOException ex) {
+                LOGGER.log(Level.SEVERE, null, ex);
+            }
+            mServerSocket = null;
+        }
+    }
     
     /**
      * Start the server, listen to clients and fulfill their requests.
      */
     public void runServer() {
-        ServerSocket server = null;
-        ExecutorService executor = Executors.newFixedThreadPool(settingsManager.getClientThreadsNumber());
+        mServerSocket = null;
+        mExecutor = Executors.newFixedThreadPool(settingsManager.getClientThreadsNumber());
 
         try {
-            server = new ServerSocket();
-            address = settingsManager.getServerIP();
-            if (address.isEmpty()) {
-                address = findServerIP();
+            if (address == null) {
+                return;
             }
-            port = settingsManager.getServerPort();
+            mServerSocket = new ServerSocket();
             SocketAddress addr = new InetSocketAddress(address, port);
-            server.bind(addr);
+            mServerSocket.bind(addr);
             System.out.println("Server name: " + addr.toString());
 
-            ServerService ss = new ServerService(executor, server);
+            ServerService ss = new ServerService();
             Thread servThread = new Thread(ss);
             servThread.setDaemon(true);
             servThread.start();
 
             LOGGER.finer("Going into the main loop...");
             while (true) {
-                Socket client = server.accept();
+                Socket client = mServerSocket.accept();
                 try {
                     ObjectInputStream ois = new ObjectInputStream(client.getInputStream());
                     ObjectOutputStream oos = new ObjectOutputStream(client.getOutputStream());
@@ -84,7 +120,7 @@ public class Server {
                     }
                     request = RequesterFactory.buildRequester(request);
                     ClientWorker cw = new ClientWorker(request, oos, client);
-                    executor.execute(cw);
+                    mExecutor.execute(cw);
                     LOGGER.fine("Request sended to executor.");
                 } catch (IOException ex) {
                     System.err.println(ex);
@@ -101,10 +137,10 @@ public class Server {
             }
             LOGGER.log(Level.SEVERE, null, ex);
         } finally {
-            Database.getInstance().closeDatabase();
-            if (server != null) {
+            if (mServerSocket != null) {
                 try {
-                    server.close();
+                    mServerSocket.close();
+                    mServerSocket = null;
                 } catch (IOException ex) {
                     LOGGER.log(Level.WARNING, null, ex);
                 }
@@ -145,6 +181,8 @@ public class Server {
                 }
             } catch (InputMismatchException ex) {
                 System.err.println("Input must be integer!");
+            } catch (NoSuchElementException ex) {
+                return null;
             }
         } catch (SocketException ex) {
             LOGGER.log(Level.SEVERE, null, ex);
@@ -169,18 +207,33 @@ public class Server {
     public int getPort() {
         return port;
     }
+    
+    /**
+     * Class for the server to run as a thread in background.
+     */
+    private static class ServerWorker extends Thread {
 
+        private final Server mServer;
+
+        /**
+         * Creates a new thread to run the server in background thread.
+         * 
+         * @param server The server, which this worker should run.
+         */
+        public ServerWorker(Server server) {
+            this.mServer = server;
+        }
+        
+        @Override
+        public void run() {
+            mServer.runServer();
+        }
+        
+    }
+    
     private class ServerService implements Runnable {
 
         private final String PROMPT = "SS: ";
-
-        private final ExecutorService mExecutor;
-        private final ServerSocket mServer;
-
-        public ServerService(ExecutorService mExecutor, ServerSocket mServer) {
-            this.mExecutor = mExecutor;
-            this.mServer = mServer;
-        }
 
         @Override
         public void run() {
@@ -189,107 +242,99 @@ public class Server {
 
             String text;
             System.out.print(PROMPT);
-            while ((text = sc.nextLine()) != null) {
-                String args[] = text.trim().split("\\s+");
-                switch (args[0].toLowerCase()) {
-                    case "help":
-                        System.out.println("ServerService: help\n"
-                                + "help - prints this message\n"
-                                + "state - prints state of the thread pool\n"
-                                + "database - tries to initialize the database\n"
-                                + "table show 'name' - prints whole database table with given name\n"
-                                + "player remove 'playerID' - deletes player with given ID from the database\n"
-                                + "player setscore 'playerID' 'score' - sets score of player with given ID\n"
-                                + "player setname 'playerID' 'name' - sets name of player with given ID\n"
-                                + "bests 'count' - prints the 'count' best players\n"
-                                + "config - reloads the config file\n"
-                                + "exit - terminate threads and shutdown the server");
-                        break;
-                    case "state":
-                        System.out.println("ServerService: " + mExecutor.toString());
-                        break;
-                    case "database":
-                        Database.getInstance().tryInitConnection();
-                        break;
-                    case "table":
-                        if (args.length < 3) {
-                            System.out.println("ServerService: unknown command, try 'help'");
+            try {
+                while ((text = sc.nextLine()) != null) {
+                    String args[] = text.trim().split("\\s+");
+                    switch (args[0].toLowerCase()) {
+                        case "help":
+                            System.out.println("ServerService: help\n"
+                                    + "help - prints this message\n"
+                                    + "state - prints state of the thread pool\n"
+                                    + "database - tries to initialize the database\n"
+                                    + "table show 'name' - prints whole database table with given name\n"
+                                    + "player remove 'playerID' - deletes player with given ID from the database\n"
+                                    + "player setscore 'playerID' 'score' - sets score of player with given ID\n"
+                                    + "player setname 'playerID' 'name' - sets name of player with given ID\n"
+                                    + "bests 'count' - prints the 'count' best players\n"
+                                    + "config - reloads the config file\n"
+                                    + "exit - terminate threads and shutdown the server");
                             break;
-                        }
-                        switch (args[1].toLowerCase()) {
-                            case "show":
-                                Database.getInstance().showTable(args[2]);
-                                break;
-                            default:
+                        case "state":
+                            System.out.println("ServerService: " + mExecutor.toString());
+                            break;
+                        case "database":
+                            Database.createUnavailableTables();
+                            break;
+                        case "table":
+                            if (args.length < 3) {
                                 System.out.println("ServerService: unknown command, try 'help'");
-                        }
-                        break;
-                    case "player":
-                        if (args.length < 3) {
-                            System.out.println("ServerService: unknown command, try 'help'");
-                            break;
-                        }
-                        try {
-                            int playerID = Integer.parseInt(args[2]);
+                                break;
+                            }
                             switch (args[1].toLowerCase()) {
-                                case "remove":
-                                    Database.getInstance().removePlayer(playerID);
-                                    break;
-                                case "setscore":
-                                    if (args.length < 4) {
-                                        System.out.println("ServerService: unknown command, try 'help'");
-                                        break;
-                                    }
-                                    int score = Integer.parseInt(args[3]);
-                                    Database.getInstance().editPlayer(playerID, null, score, null);
-                                    break;
-                                case "setname":
-                                    Database.getInstance().editPlayer(playerID, args[3], null, null);
+                                case "show":
+                                    Database.getInstance().showTable(args[2]);
                                     break;
                                 default:
                                     System.out.println("ServerService: unknown command, try 'help'");
                             }
-                        } catch (NumberFormatException ex) {
-                            System.out.println("ServerService: wrong number, try 'help'");
-                        }
-                        break;
-                    case "bests":
-                        if (args.length < 2) {
-                            System.out.println("ServerService: unknown command, try 'help'");
                             break;
-                        }
-                        int count = Integer.parseInt(args[1]);
-                        Player[] bests = Database.getInstance().getBestPlayers(count);
-                        System.out.println("Best players:");
-                        for (int i = 0; i < bests.length && i < count; i++) {
-                            Player best = bests[i];
-                            System.out.println(best);
-                        }
-                        break;
-                    case "config":
-                        settingsManager.reloadSettings();
-                        break;
-                    case "exit":
-                        shutdown();
-                        sc.close();
-                        System.out.println("ServerService: all threads down");
-                        return;
-                    default:
-                        System.out.println("ServerService: unknown command, try 'help'");
+                        case "player":
+                            if (args.length < 3) {
+                                System.out.println("ServerService: unknown command, try 'help'");
+                                break;
+                            }
+                            try {
+                                int playerID = Integer.parseInt(args[2]);
+                                switch (args[1].toLowerCase()) {
+                                    case "remove":
+                                        Database.getInstance().removePlayer(playerID);
+                                        break;
+                                    case "setscore":
+                                        if (args.length < 4) {
+                                            System.out.println("ServerService: unknown command, try 'help'");
+                                            break;
+                                        }
+                                        int score = Integer.parseInt(args[3]);
+                                        Database.getInstance().editPlayer(playerID, null, score, null);
+                                        break;
+                                    case "setname":
+                                        Database.getInstance().editPlayer(playerID, args[3], null, null);
+                                        break;
+                                    default:
+                                        System.out.println("ServerService: unknown command, try 'help'");
+                                }
+                            } catch (NumberFormatException ex) {
+                                System.out.println("ServerService: wrong number, try 'help'");
+                            }
+                            break;
+                        case "bests":
+                            if (args.length < 2) {
+                                System.out.println("ServerService: unknown command, try 'help'");
+                                break;
+                            }
+                            int count = Integer.parseInt(args[1]);
+                            Player[] bests = Database.getInstance().getBestPlayers(count);
+                            System.out.println("Best players:");
+                            for (int i = 0; i < bests.length && i < count; i++) {
+                                Player best = bests[i];
+                                System.out.println(best);
+                            }
+                            break;
+                        case "config":
+                            settingsManager.reloadSettings();
+                            break;
+                        case "exit":
+                            shutDown();
+                            sc.close();
+                            System.out.println("ServerService: all threads down");
+                            return;
+                        default:
+                            System.out.println("ServerService: unknown command, try 'help'");
+                    }
+                    System.out.print(PROMPT);
                 }
-                System.out.print(PROMPT);
-            }
-        }
-
-        private void shutdown() {
-            mExecutor.shutdown();
-            while (!mExecutor.isTerminated()) {
-                /* Wait for termination of all threads */
-            }
-            try {
-                mServer.close();
-            } catch (IOException ex) {
-                LOGGER.log(Level.WARNING, null, ex);
+            } catch (NoSuchElementException ex) {
+                shutDown();
             }
         }
 
@@ -311,13 +356,7 @@ public class Server {
         public void run() {
             try {
                 LOGGER.fine("Request recieved by ClientWorker");
-                Response response;
-                if (debugCache && mRequest instanceof SearchRequester) {
-                    ObjectInputStream ois = new ObjectInputStream(new FileInputStream(Client.objFile));
-                    response = (Response) ois.readObject();
-                } else {
-                    response = mRequest.execute();
-                }
+                Response response = mRequest.execute();
                 LOGGER.fine("Request counted sending back...");
                 if (response != null) {
                     LOGGER.log(Level.FINE, "Response info: {0}", response);
@@ -335,9 +374,8 @@ public class Server {
                     LOGGER.log(Level.WARNING, null, ex1);
                 }
             } catch (IOException ex) {
+                System.out.println("tohle?");
                 LOGGER.log(Level.WARNING, null, ex);
-            } catch (ClassNotFoundException ex) {
-                LOGGER.log(Level.SEVERE, null, ex);
             } finally {
                 LOGGER.fine("---------------------------");
                 try {

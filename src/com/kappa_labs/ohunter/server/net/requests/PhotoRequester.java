@@ -4,8 +4,9 @@ import com.kappa_labs.ohunter.lib.entities.Photo;
 import com.kappa_labs.ohunter.lib.net.OHException;
 import com.kappa_labs.ohunter.lib.net.Response;
 import com.kappa_labs.ohunter.lib.requests.PhotoRequest;
-import com.kappa_labs.ohunter.server.google_api.PlacesGetter;
+import com.kappa_labs.ohunter.server.google_api.PlacesCommunicator;
 import com.kappa_labs.ohunter.server.utils.SettingsManager;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -32,17 +33,18 @@ public class PhotoRequester extends PhotoRequest {
         for (int i = 0; i < photos.length; i++) {
             photos[i] = new Photo();
             photos[i].reference = photoReferences[i];
-            executor.execute(new PhotoFiller(photos[i], width, height));
+            executor.submit(new PhotoFiller(photos[i], width, height));
         }
         executor.shutdown();
         try {
             executor.awaitTermination(settingsManager.getPhotoPoolMaxWaitTime(), TimeUnit.MINUTES);
         } catch (InterruptedException ex) {
             Logger.getLogger(SearchRequester.class.getName()).log(Level.WARNING, null, ex);
+            throw new OHException("Server too busy now!", OHException.EXType.SERVER_OCCUPIED);
         }
 
         /* Store the data in Response object */
-        Response response = new Response(uid);
+        Response response = new Response(player);
         response.photos = photos;
 
         return response;
@@ -52,7 +54,7 @@ public class PhotoRequester extends PhotoRequest {
     /**
      * Worker class to retrieve one photo.
      */
-    private class PhotoFiller implements Runnable {
+    private class PhotoFiller implements Callable<Void> {
         
         private final Photo photo;
         private final int width, height;
@@ -71,9 +73,10 @@ public class PhotoRequester extends PhotoRequest {
         }
 
         @Override
-        public void run() {
+        public Void call() throws Exception {
             /* Download the image and store it into the photo */
-            PlacesGetter.photoRequest(photo, width, height);
+            PlacesCommunicator.photoRequest(photo, width, height);
+            return null;
         }
     
     }

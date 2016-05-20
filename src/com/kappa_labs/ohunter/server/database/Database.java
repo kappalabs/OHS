@@ -42,8 +42,6 @@ public class Database {
     private static final String TABLE_COLUMN_SIMILARITY = "PODOBNOST";
     private static final String TABLE_COLUMN_HUNT_NUMBER = "LOV";
 
-    private Connection connection;
-
     static {
         DATABASE = new Database();
 
@@ -53,6 +51,8 @@ public class Database {
         } catch (ClassNotFoundException ex) {
             LOGGER.log(Level.SEVERE, null, ex);
         }
+        
+        createUnavailableTables();
     }
 
     
@@ -80,29 +80,33 @@ public class Database {
     }
 
     /**
-     * Tries to initialize the database (create its tables). Nothing is made if
-     * all the tables exist, otherwise nonexisting tables are created.
+     * Tries to initialize the connection to database.
+     * 
+     * @return Returns the connection to the database.
      */
-    public void tryInitConnection() {
-        if (connection == null) {
-            LOGGER.fine("Initializing database connection...");
+    private static Connection tryInitConnection() {
+        Connection connection = null;
+        LOGGER.finest("Initializing database connection...");
 
-            String URL = "jdbc:derby:" + SettingsManager.getInstance().getDatabaseName() + ";create=true";
-            try {
-                connection = DriverManager.getConnection(
-                        URL,
-                        SettingsManager.getInstance().getDatabaseUser(),
-                        SettingsManager.getInstance().getDatabasePassword());
-            } catch (SQLException ex) {
-                LOGGER.log(Level.SEVERE, null, ex);
-            }
-            LOGGER.fine("... OK");
-
-            createUnavailableTables(connection);
+        String URL = "jdbc:derby:" + SettingsManager.getInstance().getDatabaseName() + ";create=true";
+        try {
+            connection = DriverManager.getConnection(
+                    URL,
+                    SettingsManager.getInstance().getDatabaseUser(),
+                    SettingsManager.getInstance().getDatabasePassword());
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, null, ex);
         }
+        LOGGER.finest("... OK");
+        
+        return connection;
     }
 
-    private static void createUnavailableTables(Connection connection) {
+    /**
+     * Checks and creates tables, which do not exist.
+     */
+    public static void createUnavailableTables() {
+        Connection connection = tryInitConnection();
         try {
             DatabaseMetaData meta = connection.getMetaData();
             ResultSet res;
@@ -140,6 +144,8 @@ public class Database {
             DBUtils.closeQuietly(res);
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, null, ex);
+        } finally {
+            DBUtils.closeQuietly(connection);
         }
     }
 
@@ -186,7 +192,6 @@ public class Database {
     private static boolean createBlockedTable(Connection connection) {
         final String createBlockedTableStatement
                 = "CREATE TABLE " + TABLE_NAME_BLOCKED + " ( "
-                //                + TABLE_COLUMN_PHOTO_ID + " VARCHAR(64) NOT NULL "
                 + TABLE_COLUMN_PLACE_ID + " VARCHAR(64) NOT NULL "
                 + ")";
         LOGGER.fine("creating " + TABLE_NAME_BLOCKED + " table");
@@ -217,7 +222,7 @@ public class Database {
      */
     public void showTable(String tableName) {
         /* Before doing anything, check (-> instantiate) the DB connector */
-        tryInitConnection();
+        Connection connection = tryInitConnection();
 
         Statement stmtWholeTable = null;
         ResultSet rsWholeTable = null;
@@ -242,10 +247,10 @@ public class Database {
             System.out.println("---------");
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, null, ex);
-            closeDatabase();
         } finally {
             DBUtils.closeQuietly(stmtWholeTable);
             DBUtils.closeQuietly(rsWholeTable);
+            DBUtils.closeQuietly(connection);
         }
     }
 
@@ -254,13 +259,17 @@ public class Database {
      * to worst in the end.
      *
      * @param count Maximum number of best players to return.
-     * @return The list of best players ordered from best to worst.
+     * @return The list of best players ordered from best to worst. Null on error.
      */
     public Player[] getBestPlayers(int count) {
         /* Before doing anything, check (-> instantiate) the DB connector */
-        tryInitConnection();
+        Connection connection = tryInitConnection();
 
-        Player[] bestPlayers = new Player[count];
+        Player[] bestPlayers = null;
+        if (connection == null) {
+            return bestPlayers;
+        }
+        
         int position = 0;
         PreparedStatement stmtGetBests = null;
         try {
@@ -273,6 +282,7 @@ public class Database {
             stmtGetBests.setInt(1, count);
 
             ResultSet results = stmtGetBests.executeQuery();
+            bestPlayers = new Player[count];
             while (results.next()) {
                 String name = results.getString(TABLE_COLUMN_NICKNAME);
                 int score = results.getInt(TABLE_COLUMN_SCORE);
@@ -280,9 +290,10 @@ public class Database {
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, null, ex);
-            closeDatabase();
+            bestPlayers = null;
         } finally {
             DBUtils.closeQuietly(stmtGetBests);
+            DBUtils.closeQuietly(connection);
         }
         return bestPlayers;
     }
@@ -295,9 +306,13 @@ public class Database {
      */
     public boolean removePlayer(int ID) {
         /* Before doing anything, check (-> instantiate) the DB connector */
-        tryInitConnection();
+        Connection connection = tryInitConnection();
 
         boolean removed = false;
+        if (connection == null) {
+            return removed;
+        }
+        
         PreparedStatement stmtRemovePlayer = null;
         try {
             /* Remove player from Player table */
@@ -321,9 +336,9 @@ public class Database {
             removed = true;
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, null, ex);
-            closeDatabase();
         } finally {
             DBUtils.closeQuietly(stmtRemovePlayer);
+            DBUtils.closeQuietly(connection);
         }
         return removed;
     }
@@ -341,9 +356,13 @@ public class Database {
      */
     public boolean editPlayer(int id, String nickname, Integer score, String password) {
         /* Before doing anything, check (-> instantiate) the DB connector */
-        tryInitConnection();
+        Connection connection = tryInitConnection();
 
-        boolean bEdited = false;
+        boolean edited = false;
+        if (connection == null) {
+            return edited;
+        }
+        
         PreparedStatement stmtEditPlayer = null;
         try {
             String statement = "UPDATE " + TABLE_NAME_PLAYER + " SET";
@@ -375,14 +394,14 @@ public class Database {
             }
             stmtEditPlayer.setInt(Math.max(nicknamePos, Math.max(scorePos, passwordPos)) + 1, id);
             stmtEditPlayer.executeUpdate();
-            bEdited = true;
+            edited = true;
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, null, ex);
-            closeDatabase();
         } finally {
             DBUtils.closeQuietly(stmtEditPlayer);
+            DBUtils.closeQuietly(connection);
         }
-        return bEdited;
+        return edited;
     }
 
     /**
@@ -395,9 +414,13 @@ public class Database {
      */
     protected int createPlayer(String nickname, int score, String password) {
         /* Before doing anything, check (-> instantiate) the DB connector */
-        tryInitConnection();
+        Connection connection = tryInitConnection();
 
         int id = -1;
+        if (connection == null) {
+            return id;
+        }
+        
         PreparedStatement stmtCreatePlayer = null;
         ResultSet results = null;
         try {
@@ -418,10 +441,10 @@ public class Database {
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, null, ex);
-            closeDatabase();
         } finally {
             DBUtils.closeQuietly(results);
             DBUtils.closeQuietly(stmtCreatePlayer);
+            DBUtils.closeQuietly(connection);
         }
         return id;
     }
@@ -438,10 +461,13 @@ public class Database {
      */
     protected int getPlayerID(String nickname, String password, boolean checkPassword) {
         /* Before doing anything, check (-> instantiate) the DB connector */
-        tryInitConnection();
+        Connection connection = tryInitConnection();
 
         int id = -1;
-
+        if (connection == null) {
+            return id;
+        }
+        
         PreparedStatement stmtCreatePlayer = null;
         ResultSet resultRow = null;
         try {
@@ -467,10 +493,10 @@ public class Database {
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, null, ex);
-            closeDatabase();
         } finally {
             DBUtils.closeQuietly(resultRow);
             DBUtils.closeQuietly(stmtCreatePlayer);
+            DBUtils.closeQuietly(connection);
         }
         return id;
     }
@@ -483,9 +509,13 @@ public class Database {
      */
     protected int getPlayerScore(int id) {
         /* Before doing anything, check (-> instantiate) the DB connector */
-        tryInitConnection();
+        Connection connection = tryInitConnection();
 
         int score = -1;
+        if (connection == null) {
+            return score;
+        }
+        
         PreparedStatement stmtCreatePlayer = null;
         ResultSet resultRow = null;
         try {
@@ -500,10 +530,10 @@ public class Database {
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, null, ex);
-            closeDatabase();
         } finally {
             DBUtils.closeQuietly(resultRow);
             DBUtils.closeQuietly(stmtCreatePlayer);
+            DBUtils.closeQuietly(connection);
         }
         return score;
     }
@@ -523,9 +553,13 @@ public class Database {
      */
     protected boolean addCompleted(int playerID, String placeID, String photoReference, Timestamp timestamp, int discoveryGain, int similarityGain, int huntNumber) {
         /* Before doing anything, check (-> instantiate) the DB connector */
-        tryInitConnection();
+        Connection connection = tryInitConnection();
 
         boolean added = false;
+        if (connection == null) {
+            return added;
+        }
+        
         PreparedStatement stmtAddCompleted = null;
         ResultSet results = null;
         try {
@@ -550,10 +584,10 @@ public class Database {
             added = true;
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, null, ex);
-            closeDatabase();
         } finally {
             DBUtils.closeQuietly(results);
             DBUtils.closeQuietly(stmtAddCompleted);
+            DBUtils.closeQuietly(connection);
         }
         return added;
     }
@@ -567,9 +601,13 @@ public class Database {
      */
     protected int isCompleted(int playerID, String placeID) {
         /* Before doing anything, check (-> instantiate) the DB connector */
-        tryInitConnection();
+        Connection connection = tryInitConnection();
+        
         int ret = -1;
-
+        if (connection == null) {
+            return ret;
+        }
+        
         PreparedStatement stmtCreatePlayer = null;
         ResultSet resultRow = null;
         try {
@@ -587,10 +625,10 @@ public class Database {
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, null, ex);
-            closeDatabase();
         } finally {
             DBUtils.closeQuietly(resultRow);
             DBUtils.closeQuietly(stmtCreatePlayer);
+            DBUtils.closeQuietly(connection);
         }
         return ret;
     }
@@ -604,9 +642,13 @@ public class Database {
      */
     protected boolean addRejected(int playerID, String placeID) {
         /* Before doing anything, check (-> instantiate) the DB connector */
-        tryInitConnection();
+        Connection connection = tryInitConnection();
 
         boolean added = false;
+        if (connection == null) {
+            return added;
+        }
+        
         PreparedStatement stmtAddRrejected = null;
         ResultSet results = null;
         try {
@@ -620,10 +662,10 @@ public class Database {
             added = true;
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, null, ex);
-            closeDatabase();
         } finally {
             DBUtils.closeQuietly(results);
             DBUtils.closeQuietly(stmtAddRrejected);
+            DBUtils.closeQuietly(connection);
         }
         return added;
     }
@@ -637,9 +679,13 @@ public class Database {
      */
     protected int isRejected(int playerID, String placeID) {
         /* Before doing anything, check (-> instantiate) the DB connector */
-        tryInitConnection();
+        Connection connection = tryInitConnection();
+        
         int id = -1;
-
+        if (connection == null) {
+            return id;
+        }
+        
         PreparedStatement stmtCreatePlayer = null;
         ResultSet resultRow = null;
         try {
@@ -657,10 +703,10 @@ public class Database {
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, null, ex);
-            closeDatabase();
         } finally {
             DBUtils.closeQuietly(resultRow);
             DBUtils.closeQuietly(stmtCreatePlayer);
+            DBUtils.closeQuietly(connection);
         }
         return id;
     }
@@ -673,9 +719,13 @@ public class Database {
      */
     protected boolean addBlocked(String placeID) {
         /* Before doing anything, check (-> instantiate) the DB connector */
-        tryInitConnection();
+        Connection connection = tryInitConnection();
 
         boolean added = false;
+        if (connection == null) {
+            return added;
+        }
+        
         PreparedStatement stmtAddBlocked = null;
         ResultSet results = null;
         try {
@@ -687,10 +737,10 @@ public class Database {
             added = true;
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, null, ex);
-            closeDatabase();
         } finally {
             DBUtils.closeQuietly(results);
             DBUtils.closeQuietly(stmtAddBlocked);
+            DBUtils.closeQuietly(connection);
         }
         return added;
     }
@@ -703,8 +753,12 @@ public class Database {
      */
     protected int isBlocked(String placeID) {
         /* Before doing anything, check (-> instantiate) the DB connector */
-        tryInitConnection();
+        Connection connection = tryInitConnection();
+        
         int id = -1;
+        if (connection == null) {
+            return id;
+        }
 
         PreparedStatement stmtCreatePlayer = null;
         ResultSet resultRow = null;
@@ -722,20 +776,12 @@ public class Database {
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, null, ex);
-            closeDatabase();
         } finally {
             DBUtils.closeQuietly(resultRow);
             DBUtils.closeQuietly(stmtCreatePlayer);
+            DBUtils.closeQuietly(connection);
         }
         return id;
-    }
-
-    /**
-     * Safely close the database connections.
-     */
-    public void closeDatabase() {
-        DBUtils.closeQuietly(connection);
-        connection = null;
     }
 
 }

@@ -46,7 +46,7 @@ public class Segmenter {
      * @return Array of Segments, which contains additional information about
      * every segment, that was found.
      */
-    public static Segment[] segment(Photo photo) {
+    public static Segment[] findSegments(Photo photo) {
         /* DEBUG: Save the image before segmentation into local file */
         if (settingsManager.getKmeansSaveForDebug()) {
             try {

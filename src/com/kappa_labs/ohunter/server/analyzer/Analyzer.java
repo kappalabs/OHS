@@ -13,6 +13,8 @@ import com.kappa_labs.ohunter.server.utils.SettingsManager;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,45 +32,46 @@ public class Analyzer {
     private Analyzer() {
         /* Analyzer cannot be instantiated from outside of this class */
     }
-
+    
     /**
      * For given two photos, count their similarity. The result is from interval
      * [0;1], 1 means perfect match, 0 totaly different.
      *
-     * @param ph1 First photo.
-     * @param ph2 Second photo.
+     * @param photo1 First photo.
+     * @param photo2 Second photo.
      * @return Similarity of given photos from interval [0;1];
      * @throws com.kappa_labs.ohunter.lib.net.OHException When Photos are
      * wrongly set.
      */
-    public static float computeSimilarity(Photo ph1, Photo ph2) throws OHException {
+    public static synchronized float computeSimilarity(Photo photo1, Photo photo2) throws OHException {
         float ret = 0;
-
+            
         /* Scale the images to provide the best results */
         try {
-            ph1.sImage = ph1._sImage = new SImage(ph1.sImage);
-            ph2.sImage = ph2._sImage = new SImage(ph2.sImage);
-            ((SImage) ph1.sImage).setImage(resize(((SImage) ph1._sImage).toBufferedImage()));
-            ((SImage) ph2.sImage).setImage(resize(((SImage) ph2._sImage).toBufferedImage()));
+            photo1.sImage = photo1._sImage = new SImage(photo1.sImage);
+            photo2.sImage = photo2._sImage = new SImage(photo2.sImage);
+            
+            ((SImage) photo1.sImage).setImage(resize(((SImage) photo1._sImage).toBufferedImage()));
+            ((SImage) photo2.sImage).setImage(resize(((SImage) photo2._sImage).toBufferedImage()));
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "Could not acquire photos from client: {0}", e);
             throw new OHException("Could not acquire photos!", OHException.EXType.OTHER);
         }
 
         /* Count average from few attempts */
-        final int poc = 5;
-        int iteration = poc;
+        final int numRepeats = settingsManager.getSimilarityNumberOfRepeats();
+        int iteration = numRepeats;
         while (iteration-- > 0) {
             /* Perform segmentation */
-            Segment[] segs1 = Segmenter.segment(ph1);
-            Segment[] segs2 = Segmenter.segment(ph2);
+            Segment[] segments1 = Segmenter.findSegments(photo1);
+            Segment[] segments2 = Segmenter.findSegments(photo2);
             LOGGER.log(Level.FINER, "... got {0} segments from first and {1} segments"
-                    + " in the second photo", new Object[]{segs1.length, segs2.length});
+                    + " in the second photo", new Object[]{segments1.length, segments2.length});
 
             /* Create new Problem from given counted segments */
             Problem problem = new Problem();
-            prepareDistribution(problem, segs1, ph1, true);
-            prepareDistribution(problem, segs2, ph2, false);
+            problem.distr1 = prepareDistribution(segments1, photo1);
+            problem.distr2 = prepareDistribution(segments2, photo2);
 
             /* Solve the EMP linear problem and return the final result */
             EMDSolver empm = new EMDSolver(problem);
@@ -76,7 +79,7 @@ public class Analyzer {
             LOGGER.finer(String.format(" - similarity: %.1f%%", 100 - act * 100));
             ret += act;
         }
-        ret /= poc;
+        ret /= numRepeats;
 
         return 1f - ret;
     }
@@ -117,13 +120,16 @@ public class Analyzer {
         return Color.RGBtoHSB((int) (rgb[0] * 255), (int) (rgb[1] * 255), (int) (rgb[2] * 255), null);
     }
 
-    private static void prepareDistribution(Problem problem, Segment[] segments, Photo photo, boolean isFirst) {
+    private static List<DistrPair> prepareDistribution(Segment[] segments, Photo photo) {
+        List<DistrPair> distribution = new ArrayList<>();
         int area = photo.getWidth() * photo.getHeight();
+        double sum = 0;
         for (Segment seg : segments) {
             DistrPair dp = new DistrPair();
 //            dp.weight = (double)seg.getSumPixels() / area;
             /* Original method uses sqrt */
             dp.weight = Math.sqrt((double) seg.getSumPixels() / area);
+            sum += dp.weight;
             Vector vect = new Vector(14);
             Addterator<Float> addter = vect.addterator();
 
@@ -155,12 +161,13 @@ public class Analyzer {
             addter.add((float) seg.getY() / photo.getHeight());
 
             dp.vector = vect;
-            if (isFirst) {
-                problem.distr1.add(dp);
-            } else {
-                problem.distr2.add(dp);
-            }
+            distribution.add(dp);
         }
+        /* Scale the sum of weights to be 1 */
+        for (DistrPair distrPair : distribution) {
+            distrPair.weight /= sum;
+        }
+        return distribution;
     }
 
     /**

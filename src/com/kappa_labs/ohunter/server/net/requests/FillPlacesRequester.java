@@ -32,7 +32,7 @@ public class FillPlacesRequester extends FillPlacesRequest {
         List<Place> filledPlaces = new ArrayList<>();
         ExecutorService executor = Executors.newFixedThreadPool(settingsManager.getFillPoolFillerThreadsNumber());
         for (Place place : places) {
-            executor.execute(new PlaceFiller(place, filledPlaces, width, height,
+            executor.submit(new PlaceFiller(place, filledPlaces, width, height,
                     daytime, settingsManager.getFillPoolPhotoThreadsNumber()));
         }
         executor.shutdown();
@@ -40,15 +40,16 @@ public class FillPlacesRequester extends FillPlacesRequest {
             executor.awaitTermination(settingsManager.getFillPoolMaxWaitTime(), TimeUnit.MINUTES);
         } catch (InterruptedException ex) {
             Logger.getLogger(SearchRequester.class.getName()).log(Level.WARNING, null, ex);
+            throw new OHException("Server too busy now!", OHException.EXType.SERVER_OCCUPIED);
         }
 
         /* Store the data in Response object */
-        Response response = new Response(uid);
+        Response response = new Response(player);
         response.places = filledPlaces.toArray(new Place[0]);
 
         Logger.getLogger(FillPlacesRequester.class.getName()).log(Level.FINE,
                 "Prepared {0} Places.", filledPlaces.size());
-
+        
         return response;
     }
 

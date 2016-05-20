@@ -1,7 +1,7 @@
 package com.kappa_labs.ohunter.server.entities;
 
 /**
- * Class representing one pixel in image. The color model used here is CIELab.
+ * Class representing one pixel in image. The color model used here is HSV.
  * It also contains fields helpful for the computation of K-Means algorithm.
  */
 public class Pixel {
@@ -17,7 +17,7 @@ public class Pixel {
      */
     public int x, y;
     /**
-     * Elements of the CIELab color model.
+     * Elements of the HSV color model.
      */
     private float h, s, v;
     /**
@@ -31,12 +31,12 @@ public class Pixel {
 
     
     /**
-     * Create new pixel with given CIELab color elements, the position is
+     * Create new pixel with given HSV color elements, the position is
      * initialized to (0;0).
      *
-     * @param h Lightness in CIELab model.
-     * @param s Red-green in CIELab model.
-     * @param v Yellow-blue in CIELab model.
+     * @param h Hue in HSV model.
+     * @param s Saturation in HSV model.
+     * @param v Value in HSV model.
      */
     public Pixel(float h, float s, float v) {
         this.h = h;
