@@ -111,9 +111,9 @@ public class Pixel {
      * @return The distance measured by color and space difference.
      */
     public double distance(Pixel second) {
-//        /* NOTE: pro HSV model */
-//        return 0.00000001 + Math.sqrt(.0000005*Math.pow(second.x - this.x, 2) + .0000005*Math.pow(second.y - this.y, 2) +
-//                .333333*Math.pow(second.h - this.h, 2) + .333333*Math.pow(second.s - this.s, 2) + .333333*Math.pow(second.v - this.v, 2));
+        /* NOTE: alternativa pocitajici skutecnou vzdalenost -> kompaktnejsi segmenty */
+//        return 0.00000001 + Math.sqrt(.005*Math.pow(second.x - this.x, 2) + .005*Math.pow(second.y - this.y, 2) +
+//                .33*Math.pow(second.h - this.h, 2) + .33*Math.pow(second.s - this.s, 2) + .33*Math.pow(second.v - this.v, 2));
 
         return Math.sqrt(Math.pow(second.h - this.h, 2)
                 + Math.pow(second.s - this.s, 2) + Math.pow(second.v - this.v, 2));

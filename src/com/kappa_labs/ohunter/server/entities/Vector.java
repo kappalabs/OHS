@@ -65,6 +65,11 @@ public class Vector implements Addable<Float> {
         for (int i = 0; i < dimension; i++) {
             sum += Math.abs(get(i) - vectTo.get(i));
         }
+        
+        /* Treshold distance */
+        if (sum > 1f) {
+            sum = 1f;
+        }
 
         return sum;
     }

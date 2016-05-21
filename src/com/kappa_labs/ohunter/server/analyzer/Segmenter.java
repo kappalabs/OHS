@@ -95,7 +95,7 @@ public class Segmenter {
             try {
                 File sDir = new File(SEGMENTED_PATH);
                 sDir.mkdirs();
-                ImageIO.write(nbi, "jpg", new File(sDir + File.separator + photo.generateName(64) + ".jpg"));
+                ImageIO.write(nbi, "png", new File(sDir + File.separator + photo.generateName(64) + ".png"));
             } catch (IOException ex) {
                 Logger.getLogger(Segmenter.class.getName()).log(Level.SEVERE, null, ex);
             }

@@ -28,6 +28,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.rmi.RemoteException;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
@@ -64,10 +65,16 @@ public class OHunterServer {
         FilenameFilter fnf = ((File dir, String name) -> name.matches(".*\\.(png|jpg|jpeg)$"));
         File fan = new File(ANALYZER);
         FILES_ANALYZE = fan.list(fnf);
+        Arrays.sort(FILES_ANALYZE);
+        for (String string : FILES_ANALYZE) {
+            System.out.println("f: "+string);
+        }
         File fmo = new File(DARK_MODELS);
         FILES_MODEL = fmo.list(fnf);
+        Arrays.sort(FILES_MODEL);
         File fda = new File(DARK);
         FILES_DARK = fda.list(fnf);
+        Arrays.sort(FILES_DARK);
     }
     
     
@@ -218,7 +225,7 @@ public class OHunterServer {
                         similarity = Analyzer.computeSimilarity(ph1, ph2);
                         System.out.println(" -> similarity = " + similarity + " = "
                                 + similarity * 100 + "%");
-                        photoConnect(ANALYZER_RESULTS, ph1, ph2, (int) (similarity * 100) + "%", "_" + poc);
+                        photoConnect(ANALYZER_RESULTS, ph1, ph2, (int) (similarity * 100) + "%", (poc++) + "_");
                         addRowAndClose(STATISTICS, (similarity * 100) + "");
                     }
                     addRowAndClose(STATISTICS, "");
@@ -254,9 +261,9 @@ public class OHunterServer {
      * @param ph1 First photo will be on the left side.
      * @param ph2 Second photo will be on the right side.
      * @param label Label that will be in between the pictures.
-     * @param suffix Suffix will be added after the whole name before file extension.
+     * @param prefix Prefix will be added before the whole name.
      */
-    private static void photoConnect(String directory, Photo ph1, Photo ph2, String label, String suffix) {
+    private static void photoConnect(String directory, Photo ph1, Photo ph2, String label, String prefix) {
         BufferedImage binew = new BufferedImage(ph1.getWidth() + ph2.getWidth(),
                 ph1.getHeight(), BufferedImage.TYPE_INT_RGB);
         Graphics2D graph = binew.createGraphics();
@@ -274,10 +281,10 @@ public class OHunterServer {
         
         File resultsFile = new File(directory);
         resultsFile.mkdirs();
-        File outFile = new File(directory + ph1.generateName(64) + "_" + ph2.generateName(64)
-                + suffix + ".jpg");
+        File outFile = new File(directory + prefix + ph1.generateName(64)
+                + "_" + ph2.generateName(64) + ".png");
         try {
-            ImageIO.write(binew, "jpg", outFile);
+            ImageIO.write(binew, "png", outFile);
         } catch (IOException ex) {
             LOGGER.log(Level.WARNING, null, ex);
         }
