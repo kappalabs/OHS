@@ -65,16 +65,22 @@ public class OHunterServer {
         FilenameFilter fnf = ((File dir, String name) -> name.matches(".*\\.(png|jpg|jpeg)$"));
         File fan = new File(ANALYZER);
         FILES_ANALYZE = fan.list(fnf);
-        Arrays.sort(FILES_ANALYZE);
-        for (String string : FILES_ANALYZE) {
-            System.out.println("f: "+string);
+        if (FILES_ANALYZE != null && FILES_ANALYZE.length > 0) {
+            Arrays.sort(FILES_ANALYZE);
+            for (String string : FILES_ANALYZE) {
+                System.out.println("f: "+string);
+            }
         }
         File fmo = new File(DARK_MODELS);
         FILES_MODEL = fmo.list(fnf);
-        Arrays.sort(FILES_MODEL);
+        if (FILES_MODEL != null && FILES_MODEL.length > 0) {
+            Arrays.sort(FILES_MODEL);
+        }
         File fda = new File(DARK);
         FILES_DARK = fda.list(fnf);
-        Arrays.sort(FILES_DARK);
+        if (FILES_DARK != null && FILES_DARK.length > 0) {
+            Arrays.sort(FILES_DARK);
+        }
     }
     
     

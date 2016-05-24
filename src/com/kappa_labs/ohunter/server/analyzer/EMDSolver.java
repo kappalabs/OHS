@@ -55,6 +55,9 @@ public class EMDSolver {
         if (solver == null) {
             solver = SolverFactory.newDefault();
         }
+        if (solver == null) {
+            throw new RuntimeException("No solver is available, if on Windows, try compilation with 32-bit JDK, otherwise SCPKSolver might not be on classpath.");
+        }
         double[] sol = solver.solve(lp);
         LPSolution lps = new LPSolution(sol, lp);
 
