@@ -47,7 +47,7 @@ public class DatabaseService {
      * @return Registered Player object.
      * @throws OHException When player exists or another error arises.
      */
-    public Player registerPlayer(String nickname, String password) throws OHException {
+    public synchronized Player registerPlayer(String nickname, String password) throws OHException {
         int euid = database.getPlayerID(nickname, null, false);
         if (euid == -1) {
             throw new OHException("Error while registering new player " + nickname + "!",

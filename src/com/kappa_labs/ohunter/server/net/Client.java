@@ -39,11 +39,22 @@ public class Client {
     private static AtomicInteger exceptionsResults;
 
     
+    /**
+     * Creates a new client, uses given server's address and port.
+     * 
+     * @param server Server to be used for connection.
+     */
     public Client(Server server) {
         this.address = server.getAddress();
         this.port = server.getPort();
     }
 
+    /**
+     * Creates a new client, uses given server's address and port.
+     * 
+     * @param address Server's address.
+     * @param port Server's port.
+     */
     public Client(String address, int port) {
         this.address = address;
         this.port = port;
@@ -115,6 +126,11 @@ public class Client {
         }
     }
 
+    /**
+     * Start server on background and few clients to retrieve random requests.
+     * 
+     * @param args Number of clients.
+     */
     public static void main(String[] args) {
         Server server = new Server();
         server.runInBackground();
@@ -122,6 +138,14 @@ public class Client {
 
         /* Pocet testovacich klientu */
         int numClients = 10;
+        if (args != null && args.length > 0) {
+            try {
+                numClients = Integer.parseInt(args[0]);
+            } catch (NumberFormatException ex) {
+                System.err.println("Wrong argument, should be number of clients.");
+                /* Use default value */
+            }
+        }
         
         initAtomicValues();
         System.out.println("Number of clients: " + numClients);
@@ -196,6 +220,11 @@ public class Client {
         }
         
         
+        /**
+         * Thread to select random request and send it to server.
+         * 
+         * @param mClient The starting Client class.
+         */
         public ClientWorker(Client mClient) {
             this.mClient = mClient;
         }
