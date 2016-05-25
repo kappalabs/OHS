@@ -140,8 +140,6 @@ public class Analyzer {
             for (int i = 0; i < Segment.MODEL_NUM_ELEMENTS; i++) {
                 addter.add(mean_hsb[i]);
                 addter.add(stdev_hsb[i]);
-                /* Skeweness is from range [-1;1] */
-//                addter.add(skew_hsb[i] / 2 + 0.5f);
                 addter.add(skew_hsb[i]);
             }
             /* The other elements - another 5 of them */
@@ -150,10 +148,7 @@ public class Analyzer {
             int o_height = seg.getBottom() - seg.getTop();
             o_height = Math.max(o_height, 1);
             int o_area = o_width * o_height;
-            /* original - ze specifikace */
-//            addter.add((float)Math.log((double)o_width / o_height));
-//            addter.add((float)Math.log(o_area));
-            /* modified */
+            /* 5 elements characterizing the shape of one segment */
             addter.add((float) Math.log((double) o_width / o_height + 1));
             addter.add((float) Math.log((double) o_area / area + 1));
             addter.add((float) seg.getSumPixels() / o_area);

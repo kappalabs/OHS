@@ -10,6 +10,7 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -67,7 +68,6 @@ public class SettingsManager {
 
     private static SettingsManager settingsManager;
 
-    
     /**
      * Initializes the static fields in this class, loads the settings and
      * creates the config file if does not exist.
@@ -98,6 +98,7 @@ public class SettingsManager {
                 "The initial score for a new player."));
 //TODO: odstranit pred publikovanim!
         DEFAULT_PROPERTIES.put(GOOGLE_API_KEY, new Property("AIzaSyCaLI54I822MZldkezUwu5uswteI1a15Qs",
+                "<klic>",
                 "The Google API key for Google Places requests."));
 
         /* Values for Analyzer */
@@ -139,6 +140,7 @@ public class SettingsManager {
         readSettings();
     }
 
+    
     private SettingsManager() {
         /* Non-instantiable class */
     }
@@ -235,14 +237,14 @@ public class SettingsManager {
             File settingsFile = new File(SETTINGS_FILENAME);
             printWriter = new PrintWriter(new FileOutputStream(settingsFile, true));
             printWriter.println("# " + property.getDescription());
-            if (property.getValue() instanceof String) {
-                printWriter.println(key + " = \"" + property.getValue() + "\"");
+            if (property.getPublicValue() instanceof String) {
+                printWriter.println(key + " = \"" + property.getPublicValue() + "\"");
             } else {
-                printWriter.println(key + " = " + property.getValue());
+                printWriter.println(key + " = " + property.getPublicValue());
             }
             printWriter.println();
             printWriter.flush();
-            LOGGER.log(Level.FINER, "Property <{0}; {1}> was written to config.", new Object[]{key, property.getValue()});
+            LOGGER.log(Level.FINER, "Property <{0}; {1}> was written to config.", new Object[]{key, property.getPublicValue()});
         } catch (IOException ex) {
             LOGGER.log(Level.SEVERE, null, ex);
         } finally {
@@ -261,7 +263,7 @@ public class SettingsManager {
      */
     private int getIntegerProperty(String key) {
         Integer value = (Integer) PROPERTIES.get(key);
-        if (value == null) {
+        if (value == null || Objects.equals(value, (Integer) DEFAULT_PROPERTIES.get(key).getExportValue())) {
             Property prop = DEFAULT_PROPERTIES.get(key);
             value = (Integer) prop.getValue();
             addProperty(key, prop);
@@ -278,7 +280,7 @@ public class SettingsManager {
      */
     private String getStringProperty(String key) {
         String value = (String) PROPERTIES.get(key);
-        if (value == null) {
+        if (value == null || Objects.equals(value, (String) DEFAULT_PROPERTIES.get(key).getExportValue())) {
             Property prop = DEFAULT_PROPERTIES.get(key);
             value = (String) prop.getValue();
             addProperty(key, prop);
@@ -439,10 +441,10 @@ public class SettingsManager {
     public boolean getKmeansSaveForDebug() {
         return getIntegerProperty(KMEANS_SAVE_FOR_DEBUG_KEY) > 0;
     }
-    
+
     /**
      * Number of repeats of the similarity measure algorithm.
-     * 
+     *
      * @return The number of repeats of the similarity measure algorithm.
      */
     public int getSimilarityNumberOfRepeats() {
@@ -502,6 +504,7 @@ public class SettingsManager {
     private static class Property<T> {
 
         private final T value;
+        private final T exportValue;
         private final String description;
 
         /**
@@ -512,6 +515,22 @@ public class SettingsManager {
          */
         public Property(T value, String description) {
             this.value = value;
+            this.exportValue = null;
+            this.description = description;
+        }
+
+        /**
+         * Creates a new property with given value and its description. This
+         * constructor supports private values, that should not be exported.
+         *
+         * @param value The value of the property.
+         * @param exportValue The value which will be exported to the config
+         * file, if different from the 'value'.
+         * @param description The description of the property.
+         */
+        public Property(T value, T exportValue, String description) {
+            this.value = value;
+            this.exportValue = exportValue;
             this.description = description;
         }
 
@@ -522,6 +541,26 @@ public class SettingsManager {
          */
         public T getValue() {
             return value;
+        }
+
+        /**
+         * Gets the value, which should be written to config file.
+         *
+         * @return The value, which should be written to config file.
+         */
+        public T getPublicValue() {
+            return exportValue == null ? value : exportValue;
+        }
+
+        /**
+         * Gets the value, which should be written to config file instead of the
+         * real value.
+         *
+         * @return The value, which should be written to config file instead of
+         * the real value.
+         */
+        public T getExportValue() {
+            return exportValue;
         }
 
         /**
