@@ -96,8 +96,8 @@ public class SettingsManager {
         /* Values for the game */
         DEFAULT_PROPERTIES.put(INITIAL_SCORE_KEY, new Property(100,
                 "The initial score for a new player."));
-//TODO: odstranit pred publikovanim!
-        DEFAULT_PROPERTIES.put(GOOGLE_API_KEY, new Property("AIzaSyCaLI54I822MZldkezUwu5uswteI1a15Qs",
+
+        DEFAULT_PROPERTIES.put(GOOGLE_API_KEY, new Property("",
                 "<klic>",
                 "The Google API key for Google Places requests."));
 
@@ -263,10 +263,13 @@ public class SettingsManager {
      */
     private int getIntegerProperty(String key) {
         Integer value = (Integer) PROPERTIES.get(key);
-        if (value == null || Objects.equals(value, (Integer) DEFAULT_PROPERTIES.get(key).getExportValue())) {
+        boolean isExport = Objects.equals(value, (String) DEFAULT_PROPERTIES.get(key).getExportValue());
+        if (value == null || isExport) {
             Property prop = DEFAULT_PROPERTIES.get(key);
             value = (Integer) prop.getValue();
-            addProperty(key, prop);
+            if (!isExport) {
+                addProperty(key, prop);
+            }
         }
         return value;
     }
@@ -280,10 +283,13 @@ public class SettingsManager {
      */
     private String getStringProperty(String key) {
         String value = (String) PROPERTIES.get(key);
-        if (value == null || Objects.equals(value, (String) DEFAULT_PROPERTIES.get(key).getExportValue())) {
+        boolean isExport = Objects.equals(value, (String) DEFAULT_PROPERTIES.get(key).getExportValue());
+        if (value == null || isExport) {
             Property prop = DEFAULT_PROPERTIES.get(key);
             value = (String) prop.getValue();
-            addProperty(key, prop);
+            if (!isExport) {
+                addProperty(key, prop);
+            }
         }
         return value;
     }
